@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "PetUp",
+    "slug": "PetUp",
+    "scheme": "petup",
+    "version": "1.0.0",
+    "splash": {},
+    "plugins": [
+      "expo-router"
+    ],
+    "android": {
+      "package": "com.anonymous.PetUp"
+    },
+    "ios": {
+      "bundleIdentifier": "com.anonymous.PetUp"
+    }
+  }
+}
