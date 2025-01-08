@@ -10,7 +10,6 @@ export default function SignUpPage() {
     await AsyncStorage.setItem("userData", "present");
     console.log("Signed up!");
     router.replace("/tabs");
-    
   };
 
   return (
