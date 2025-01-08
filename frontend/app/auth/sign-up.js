@@ -6,11 +6,11 @@ export default function SignUpPage() {
   const router = useRouter();
 
   const handleSignUp = async () => {
-    // Simulation of signing up
     console.log("Signing up...");
     await AsyncStorage.setItem("userData", "present");
     console.log("Signed up!");
     router.replace("/tabs");
+    
   };
 
   return (
