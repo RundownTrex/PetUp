@@ -6,10 +6,14 @@
     "version": "1.0.0",
     "splash": {},
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
     ],
     "android": {
-      "package": "com.anonymous.PetUp"
+      "package": "com.anonymous.PetUp",
+      "googleServicesFile": "./google-services.json"
+
     },
     "ios": {
       "bundleIdentifier": "com.anonymous.PetUp"
