@@ -13,10 +13,6 @@
     "android": {
       "package": "com.anonymous.PetUp",
       "googleServicesFile": "./google-services.json"
-
-    },
-    "ios": {
-      "bundleIdentifier": "com.anonymous.PetUp"
     }
   }
 }

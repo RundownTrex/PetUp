@@ -1,0 +1,24 @@
+const colors = {
+  blacktext: "#000000",
+  lightgraytext: "#CCCCCC",
+  white: "#FFFFFF",
+  darkgray: "#999999",
+
+  accent: "#E3C178",
+  darkaccent: "#C6A869",
+  complementary: "#789EE3",
+
+  dark: "#1B2333",
+
+  somewhatlightback: "#424242",
+  coolback: "#E0E0E0",
+  
+  green: "#4BB543",
+  linkblue: "#99c3ff",
+
+  alert: "#f7c631",
+  completed: "#15bd02",
+  cancelled: "#bd0202",
+};
+
+export default colors;
