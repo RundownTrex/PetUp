@@ -25,7 +25,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="petup"/>
-        <data android:scheme="com.anonymous.PetUp"/>
+        <data android:scheme="com.rundowntrex.PetUp"/>
       </intent-filter>
     </activity>
   </application>

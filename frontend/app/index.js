@@ -5,7 +5,7 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 
 export default function Index() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true); // State to handle loading
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function checkLoginStatus() {
@@ -16,7 +16,7 @@ export default function Index() {
           router.replace("/tabs/");
         } else {
           // User is not logged in, redirect to landing page
-          router.replace("/landing");
+          router.replace("/auth/sign-up");
         }
       } catch (error) {
         console.error("Error checking login status:", error);
@@ -38,7 +38,7 @@ export default function Index() {
     );
   }
 
-  return null; // Nothing to render as we redirect the user
+  return null;
 }
 
 const styles = StyleSheet.create({

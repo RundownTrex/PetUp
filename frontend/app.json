@@ -11,7 +11,7 @@
       "@react-native-firebase/auth"
     ],
     "android": {
-      "package": "com.anonymous.PetUp",
+      "package": "com.rundowntrex.PetUp",
       "googleServicesFile": "./google-services.json"
     }
   }

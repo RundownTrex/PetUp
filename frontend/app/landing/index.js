@@ -71,7 +71,6 @@ export default function LandingPage() {
       <MainButton
         title={currentSlide < slides.length - 1 ? "Next" : "Sign Up"}
         onPress={handleNext}
-        color={colors.primary}
       />
     </View>
   );

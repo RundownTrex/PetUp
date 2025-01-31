@@ -4,15 +4,16 @@ const colors = {
   white: "#FFFFFF",
   darkgray: "#999999",
 
-  accent: "#E3C178",
-  darkaccent: "#C6A869",
-  complementary: "#789EE3",
+  accent: "#35BEA5",
+  darkaccent: "#418478",
+  complementary: "#D95523",
+  darkcomp: "#99583F",
 
   dark: "#1B2333",
 
   somewhatlightback: "#424242",
   coolback: "#E0E0E0",
-  
+
   green: "#4BB543",
   linkblue: "#99c3ff",
 

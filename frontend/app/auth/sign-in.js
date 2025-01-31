@@ -47,7 +47,7 @@ export default function SignInPage() {
         secureTextEntry
       />
       <Button title="Sign In" onPress={handleSignIn} />
-      <Button title="Sign Up" onPress={() => router.replace("/auth/sign-up")} />
+      <Button title="Sign Up" onPress={() => router.push("/auth/sign-up")} />
     </View>
   );
 }

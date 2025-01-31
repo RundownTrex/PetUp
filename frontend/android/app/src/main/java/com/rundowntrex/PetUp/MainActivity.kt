@@ -1,4 +1,4 @@
-package com.anonymous.PetUp
+package com.rundowntrex.PetUp
 
 import android.os.Build
 import android.os.Bundle

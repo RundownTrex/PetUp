@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.PetUp'
+    namespace 'com.rundowntrex.PetUp'
     defaultConfig {
-        applicationId 'com.anonymous.PetUp'
+        applicationId 'com.rundowntrex.PetUp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
