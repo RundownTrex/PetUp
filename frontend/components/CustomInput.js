@@ -1,5 +1,5 @@
-import React from "react";
-import { TextInput } from "react-native-paper";
+import React, { useState } from "react";
+import { TextInput, IconButton } from "react-native-paper";
 import { StyleSheet } from "react-native";
 
 import colors from "../utils/colors";
@@ -8,22 +8,32 @@ export default function CustomInput({
   label,
   value,
   onChangeText,
-  secureTextEntry,
+  secureTextEntry = false,
   keyboardType = "default",
   autoCapitalize = "none",
   style,
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <TextInput
       label={label}
       value={value}
       onChangeText={onChangeText}
-      secureTextEntry={secureTextEntry}
+      secureTextEntry={secureTextEntry && !showPassword}
       keyboardType={keyboardType}
       autoCapitalize={autoCapitalize}
       mode="outlined"
       style={[styles.input, style]}
       theme={{ colors: { primary: colors.accent } }}
+      right={
+        secureTextEntry ? (
+          <TextInput.Icon
+            icon={showPassword ? "eye" : "eye-off"}
+            onPress={() => setShowPassword(!showPassword)}
+          />
+        ) : null
+      }
     />
   );
 }

@@ -26,6 +26,7 @@
     "react-native": "0.76.5",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "^2.22.1",
+    "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-paper": "^5.13.1",
     "react-native-reanimated": "^3.16.7",
     "react-native-reanimated-carousel": "^3.5.1",

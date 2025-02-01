@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import CustomInput from "../../components/CustomInput";
 import MainButton from "../../components/MainButton";
@@ -18,7 +19,10 @@ import { GOOGLE_WEB_CLIENT_ID } from "@env";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
   const [password, setPassword] = useState("");
+  const [cpassword, setcPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -39,7 +43,13 @@ export default function SignUpPage() {
 
   const signUpWEmailnPass = async () => {
     setLoading(true);
-    if (!email.trim() || !password.trim()) {
+    if (
+      !email.trim() ||
+      !password.trim() ||
+      !cpassword.trim() ||
+      !firstname.trim() ||
+      !lastname.trim()
+    ) {
       Toast.show({
         type: "info",
         text1: "Error",
@@ -49,27 +59,63 @@ export default function SignUpPage() {
       return;
     }
 
+    if (password !== cpassword) {
+      Toast.show({
+        type: "error",
+        text1: "Passwords do not match",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log("Starting sign-up process...");
       setLoading(true);
       const userCredential = await auth().createUserWithEmailAndPassword(
         email,
         password
       );
       console.log("Signing up...");
+
+      const user = userCredential.user;
+      await user.sendEmailVerification();
+
+      await firestore().collection("users").doc(user.uid).set({
+        email: user.email,
+        firstname: firstname.trim(),
+        lastname: lastname.trim(),
+        pfpUrl: "",
+      });
+
       await AsyncStorage.setItem(
         "userData",
         JSON.stringify(userCredential.user.uid)
       );
-      console.log("Signed up!");
-      router.replace("/tabs");
+
+      Toast.show({
+        type: "info",
+        text1: "Verification email sent",
+        text2: "Check your inbox for the verification email",
+      });
+
+
+      router.replace("/tabs?signUpWEmail=true");
       console.log("Navigated to home page");
     } catch (error) {
-      console.error("Error signing up: ", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error.message,
-      });
+      if (error.code === "auth/email-already-in-use") {
+        Toast.show({
+          type: "error",
+          text1: "Email is already in use",
+          text2: "Try logging in instead",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error signing up",
+          text2: error.message,
+        });
+      }
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -143,55 +189,80 @@ export default function SignUpPage() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.title}>Sign Up</Text>
-        <CustomInput
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
+      <KeyboardAwareScrollView>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.title}>Sign Up</Text>
+          <CustomInput
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <CustomInput
+            label="First Name"
+            value={firstname}
+            onChangeText={setFirstname}
+            autoCapitalize="words"
+          />
+
+          <CustomInput
+            label="Last Name"
+            value={lastname}
+            onChangeText={setLastname}
+            autoCapitalize="words"
+          />
+
+          <CustomInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <CustomInput
+            label="Confim password"
+            value={cpassword}
+            onChangeText={setcPassword}
+            secureTextEntry
+          />
+        </View>
+        <MainButton
+          title="Create account"
+          loading={loading}
+          disabled={loading}
+          onPress={signUpWEmailnPass}
+          style={styles.button}
         />
 
-        <CustomInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-      </View>
-      <MainButton
-        title="Create account"
-        loading={loading}
-        disabled={loading}
-        onPress={signUpWEmailnPass}
-        style={styles.button}
-      />
+        <CustomDivider text="OR" />
 
-      <CustomDivider text="OR" />
+        <Button
+          mode="contained"
+          icon={() => <FontAwesome name="google" size={20} color="white" />}
+          onPress={() => signUpWGoogle()}
+          loading={loading}
+          disabled={loading}
+          style={{
+            backgroundColor: colors.accent,
+            marginTop: 10,
+            paddingVertical: 5,
+            borderRadius: 80,
+          }}
+        >
+          Sign Up with Google
+        </Button>
 
-      <Button
-        mode="contained"
-        icon={() => <FontAwesome name="google" size={20} color="white" />}
-        onPress={() => signUpWGoogle()}
-        loading={loading}
-        disabled={loading}
-        style={{
-          backgroundColor: colors.accent,
-          marginTop: 10,
-          paddingVertical: 5,
-          borderRadius: 80,
-        }}
-      >
-        Sign Up with Google
-      </Button>
-
-      <Pressable
-        style={styles.signinbutton}
-        onPress={() => router.replace("/auth/sign-in")}
-      >
-        <Text style={styles.signintext}>Already have an account? Sign In</Text>
-      </Pressable>
+        <Pressable
+          style={styles.signinbutton}
+          onPress={() => router.replace("/auth/sign-in")}
+        >
+          <Text style={styles.signintext}>
+            Already have an account? Sign In
+          </Text>
+        </Pressable>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
