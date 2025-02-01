@@ -20,7 +20,7 @@ export default function Index() {
         }
       } catch (error) {
         console.error("Error checking login status:", error);
-        router.replace("/landing"); // Fallback to landing page on error
+        router.replace("/auth/sign-up"); // Fallback to landing page on error
       } finally {
         setIsLoading(false); // Ensure loading stops
       }

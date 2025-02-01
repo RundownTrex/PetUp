@@ -98,7 +98,6 @@ export default function SignUpPage() {
         text2: "Check your inbox for the verification email",
       });
 
-
       router.replace("/tabs?signUpWEmail=true");
       console.log("Navigated to home page");
     } catch (error) {
@@ -173,7 +172,7 @@ export default function SignUpPage() {
           text1: "Signed up with Google!",
           text2: "Redirecting...",
         });
-        router.replace("/tabs");
+        router.replace("/tabs/");
       }
     } catch (error) {
       console.error("Error signing up:", error);
@@ -190,7 +189,6 @@ export default function SignUpPage() {
   return (
     <View style={styles.container}>
       <KeyboardAwareScrollView>
-
         <View style={styles.inputContainer}>
           <Text style={styles.title}>Sign Up</Text>
           <CustomInput
@@ -256,7 +254,7 @@ export default function SignUpPage() {
 
         <Pressable
           style={styles.signinbutton}
-          onPress={() => router.replace("/auth/sign-in")}
+          onPress={() => router.push("/auth/sign-in")}
         >
           <Text style={styles.signintext}>
             Already have an account? Sign In

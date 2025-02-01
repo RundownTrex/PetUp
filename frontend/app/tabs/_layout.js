@@ -19,7 +19,12 @@ export default function TabLayout() {
 
   return (
     <>
-      <CustomPopup visible={showPopup} onDismiss={() => setShowPopup(false)} />
+      <CustomPopup
+        visible={showPopup}
+        onDismiss={() => setShowPopup(false)}
+        text1="Verify your email"
+        text2="Please check your email to verify your account"
+      />
       <Tabs>
         <Tabs.Screen
           name="index"
