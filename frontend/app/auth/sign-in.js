@@ -66,7 +66,7 @@ export default function SignInPage() {
           text1: "Logged in successfully",
           text2: "Redirecting to home screen...",
         });
-        router.replace("/tabs/");
+        router.replace("/tabs/home");
         console.log("Navigated to home page");
       } else {
         await auth().signOut();
@@ -131,7 +131,7 @@ export default function SignInPage() {
           JSON.stringify(userCredential.user.uid)
         );
         console.log("Signed in with Google");
-        router.replace("/tabs/");
+        router.replace("/tabs/home");
       } else {
         await auth().signOut();
         await AsyncStorage.removeItem("userData");
@@ -205,11 +205,14 @@ export default function SignInPage() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            style={{ marginBottom: 0 }}
           />
-          <Pressable onPress={forgetPassword}>
-            <Text style={styles.signintext}>Forgot password?</Text>
-          </Pressable>
         </View>
+        <Pressable onPress={forgetPassword} style={styles.forgetPassword}>
+          <Text style={{ color: colors.blacktext, fontWeight: 500 }}>
+            Forgot password?
+          </Text>
+        </Pressable>
         <MainButton
           onPress={signInWEmail}
           title="Sign In"
@@ -223,7 +226,7 @@ export default function SignInPage() {
           buttonColor={colors.accent}
           mode="contained"
           onPress={signInWGoogle}
-          style={{ marginTop: 20 }}
+          style={{ marginTop: 15, marginBottom: 5 }}
           loading={loading}
           disabled={loading}
         >
@@ -250,14 +253,20 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
   inputContainer: { alignItems: "center" },
-  button: { borderRadius: 80 },
+  button: { borderRadius: 80, marginBottom: -5 },
   signintext: {
     color: colors.blacktext,
-    fontWeight: "500",
     textAlign: "center",
+    fontWeight: "500",
   },
 
   signinbutton: {
     paddingVertical: 5,
+  },
+
+  forgetPassword: {
+    marginTop: 5,
+    marginHorizontal: 5,
+    marginBottom: 16,
   },
 });

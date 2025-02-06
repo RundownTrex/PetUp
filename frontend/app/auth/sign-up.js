@@ -98,7 +98,7 @@ export default function SignUpPage() {
         text2: "Check your inbox for the verification email",
       });
 
-      router.replace("/tabs?signUpWEmail=true");
+      router.replace("/tabs/home?signUpWEmail=true");
       console.log("Navigated to home page");
     } catch (error) {
       if (error.code === "auth/email-already-in-use") {
@@ -172,7 +172,7 @@ export default function SignUpPage() {
           text1: "Signed up with Google!",
           text2: "Redirecting...",
         });
-        router.replace("/tabs/");
+        router.replace("/tabs/home");
       }
     } catch (error) {
       console.error("Error signing up:", error);

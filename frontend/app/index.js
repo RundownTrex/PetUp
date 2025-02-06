@@ -13,7 +13,7 @@ export default function Index() {
         const userData = await AsyncStorage.getItem("userData");
         if (userData) {
           // User is logged in, redirect to home
-          router.replace("/tabs/");
+          router.replace("/tabs/home");
         } else {
           // User is not logged in, redirect to landing page
           router.replace("/auth/sign-up");
