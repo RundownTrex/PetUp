@@ -8,11 +8,45 @@
     "plugins": [
       "expo-router",
       "@react-native-firebase/app",
-      "@react-native-firebase/auth"
+      "@react-native-firebase/auth",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Ubuntu-Regular.ttf",
+            "./assets/fonts/Ubuntu-Bold.ttf",
+            "./assets/fonts/Ubuntu-Light.ttf",
+            "./assets/fonts/Ubuntu-Medium.ttf",
+            "./assets/fonts/Ubuntu-Italic.ttf",
+            "./assets/fonts/Ubuntu-LightItalic.ttf",
+            "./assets/fonts/Ubuntu-MediumItalic.ttf",
+            "./assets/fonts/Ubuntu-BoldItalic.ttf",
+            "./assets/fonts/Microsoft Aptos Fonts/Aptos.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "android": {
+            "backgroundColor": "#ffffff",
+            "image": "./assets/AppIcons/splash-icon-light.png",
+            "dark": {
+              "image": "./assets/AppIcons/splash-icon-dark.png",
+              "backgroundColor": "#000000"
+            },
+            "resizeMode": "contain",
+            "imageWidth": 200
+          }
+        }
+      ]
     ],
     "android": {
       "package": "com.rundowntrex.PetUp",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/AppIcons/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
     }
   }
-}
+}}

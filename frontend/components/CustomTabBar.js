@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "expo-router";
 import colors from "../utils/colors";
 
 const TABS = [
-  { name: "home", icon: "home" },
+  { name: "home/1_index", icon: "home" },
   { name: "search", icon: "search" },
   { name: "chat", icon: "chatbubbles" },
   { name: "profile", icon: "person" },
@@ -15,12 +15,19 @@ export default function CustomTabBar(props) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Debugging logs
+  console.log("Current pathname:", pathname);
+
   // Hide tab bar if inside a stack screen
-  const hideTabBar =
-    pathname.startsWith("/tabs/home/") ||
-    pathname.startsWith("/tabs/search/") ||
-    pathname.startsWith("/tabs/chat/") ||
-    pathname.startsWith("/tabs/profile/");
+  const hideTabBar = ![
+    "/tabs/home/1_index",
+    "/tabs/search",
+    "/tabs/chat",
+    "/tabs/profile",
+  ].includes(pathname);
+
+  // Debugging logs
+  console.log("Hide tab bar:", hideTabBar);
 
   if (hideTabBar) return null; // Hide the tab bar
 
@@ -28,6 +35,8 @@ export default function CustomTabBar(props) {
     <View style={styles.tabBarContainer}>
       {TABS.map((tab) => {
         const isActive = pathname === `/tabs/${tab.name}`;
+        console.log(tab.name, isActive);
+        ("");
 
         return (
           <Pressable
