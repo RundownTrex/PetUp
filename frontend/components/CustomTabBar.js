@@ -16,7 +16,7 @@ export default function CustomTabBar(props) {
   const pathname = usePathname();
 
   // Debugging logs
-  console.log("Current pathname:", pathname);
+  // console.log("Current pathname:", pathname);
 
   // Hide tab bar if inside a stack screen
   const hideTabBar = ![
@@ -27,7 +27,7 @@ export default function CustomTabBar(props) {
   ].includes(pathname);
 
   // Debugging logs
-  console.log("Hide tab bar:", hideTabBar);
+  // console.log("Hide tab bar:", hideTabBar);
 
   if (hideTabBar) return null; // Hide the tab bar
 
@@ -35,8 +35,7 @@ export default function CustomTabBar(props) {
     <View style={styles.tabBarContainer}>
       {TABS.map((tab) => {
         const isActive = pathname === `/tabs/${tab.name}`;
-        console.log(tab.name, isActive);
-        ("");
+        // console.log(tab.name, isActive);
 
         return (
           <Pressable

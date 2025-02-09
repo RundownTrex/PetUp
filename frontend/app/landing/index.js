@@ -65,6 +65,8 @@ export default function LandingPage() {
           pagingEnabled
           snapEnabled
           loop={false}
+          autoplay={false}
+          scrollEnabled={false}
         />
       </View>
 
@@ -103,15 +105,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
     color: colors.blacktext,
     marginBottom: 10,
     textAlign: "center",
+    fontFamily: "UbuntuBold",
   },
   description: {
     fontSize: 16,
-    color: colors.darkgraytext,
+    color: colors.darkgray,
     textAlign: "center",
     paddingHorizontal: 10,
+    fontFamily: "UbuntuMedium",
   },
 });

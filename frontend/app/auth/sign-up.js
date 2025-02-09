@@ -249,7 +249,7 @@ export default function SignUpPage() {
             borderRadius: 80,
           }}
         >
-          Sign Up with Google
+          <Text style={{ fontFamily: "AptosBold" }}>Sign Up with Google</Text>
         </Button>
 
         <Pressable
@@ -275,12 +275,16 @@ const styles = StyleSheet.create({
   inputContainer: {
     alignItems: "center",
   },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+    fontFamily: "AptosDisplayBold",
+  },
   button: { borderRadius: 80 },
   signintext: {
     color: colors.blacktext,
-    fontWeight: "500",
     textAlign: "center",
+    fontFamily: "UbuntuMediumItalic",
   },
 
   signinbutton: {

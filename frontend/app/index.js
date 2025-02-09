@@ -22,6 +22,12 @@ export default function Index() {
     UbuntuMediumItalic: require("../assets/fonts/Ubuntu-MediumItalic.ttf"),
     UbuntuBoldItalic: require("../assets/fonts/Ubuntu-BoldItalic.ttf"),
     Aptos: require("../assets/fonts/Microsoft Aptos Fonts/Aptos.ttf"),
+    AptosBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Bold.ttf"),
+    AptosItalic: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Italic.ttf"),
+    AptosExtraBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-ExtraBold.ttf"),
+    AptosDisplay: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Display.ttf"),
+    AptosDisplayBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Display-Bold.ttf"),
+    AptosSemiBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-SemiBold.ttf"),
   });
 
   useEffect(() => {
@@ -31,7 +37,7 @@ export default function Index() {
         if (userData) {
           router.replace("/tabs/home"); // Redirect to home if logged in
         } else {
-          router.replace("/auth/sign-up"); // Redirect to sign-up if not logged in
+          router.replace("/landing/"); // Redirect to sign-up if not logged in
         }
       } catch (error) {
         console.error("Error checking login status:", error);

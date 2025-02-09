@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import colors from "../utils/colors";
 
 const CustomHeader = ({ title }) => {
   const navigation = useNavigation();
@@ -42,6 +43,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { height: 2, width: 0 },
+    borderBottomColor: colors.darkgray,
+    borderBottomWidth: 1,
   },
   backButton: {
     width: 35, // Ensure consistent width

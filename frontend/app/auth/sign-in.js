@@ -230,7 +230,7 @@ export default function SignInPage() {
           loading={loading}
           disabled={loading}
         >
-          Sign in with Google
+          <Text style={{ fontFamily: "AptosBold" }}>Sign in with Google</Text>
         </Button>
 
         <Pressable
@@ -251,13 +251,17 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 16,
   },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+    fontFamily: "AptosDisplayBold",
+  },
   inputContainer: { alignItems: "center" },
   button: { borderRadius: 80, marginBottom: -5 },
   signintext: {
     color: colors.blacktext,
     textAlign: "center",
-    fontWeight: "500",
+    fontFamily: "UbuntuMediumItalic",
   },
 
   signinbutton: {
@@ -268,5 +272,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginHorizontal: 5,
     marginBottom: 16,
+    fontFamily: "AptosBold",
   },
 });

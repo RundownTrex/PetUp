@@ -1,22 +1,20 @@
-import React from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Pressable,
-  Image,
-} from "react-native";
+import { useState, useEffect } from "react";
+import { Text, View, StyleSheet, Pressable, Image } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedScrollHandler,
   withTiming,
 } from "react-native-reanimated";
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Divider } from "react-native-paper";
+
 import MainButton from "../../../components/MainButton";
+import CustomDivider from "../../../components/CustomDivider";
+import FeaturedPetsCarousel from "../../../components/FeaturedPetsCarousel";
 import colors from "../../../utils/colors";
 
 const DATA = Array.from({ length: 30 }, (_, i) => `Item ${i + 1}`); // Dummy data for scrolling
@@ -24,6 +22,35 @@ const DATA = Array.from({ length: 30 }, (_, i) => `Item ${i + 1}`); // Dummy dat
 export default function HomePage() {
   const router = useRouter();
   const scrollY = useSharedValue(0);
+  const [user, setUser] = useState(null);
+  const [firstName, setFirstName] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        // console.log("User ID:", currentUser.uid);
+
+        try {
+          const userDoc = await firestore()
+            .collection("users")
+            .doc(currentUser.uid)
+            .get();
+
+          if (userDoc.exists) {
+            console.log("User Data:", userDoc.data()); // Debugging
+            setFirstName(userDoc.data().firstname || ""); // Ensure it's set to an empty string if undefined
+          } else {
+            console.log("User document does not exist.");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup on unmount
+  }, []);
 
   // Scroll handler
   const scrollHandler = useAnimatedScrollHandler({
@@ -62,12 +89,11 @@ export default function HomePage() {
       {/* Collapsible Header */}
       <Animated.View style={[styles.header, headerStyle]}>
         <View style={styles.headerContent}>
-          {/* <Image
-            source={require("../../../assets/PetUpLogo.jpg")}
-            style={styles.logo}
-          /> */}
-          <Text style={styles.headerTitle}>{getGreeting()}</Text>
           <View style={styles.headerIcons}>
+            <Image
+              source={require("../../../assets/AppIcons/Logo.png")}
+              style={styles.logo}
+            />
             <Pressable onPress={() => router.push("/tabs/notifications")}>
               <Ionicons name="notifications-outline" size={28} color="black" />
             </Pressable>
@@ -75,21 +101,32 @@ export default function HomePage() {
         </View>
       </Animated.View>
 
-      <View style={{ flex: 1 }}>
-        <Animated.FlatList
-          data={DATA}
-          keyExtractor={(item, index) => index.toString()}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          contentContainerStyle={{ paddingTop: 60, paddingBottom: 80 }} // Fix: Prevents bottom tab bar overlap
-          renderItem={({ item }) => (
-            <View style={styles.listItem}>
-              <Text>{item}</Text>
-            </View>
-          )}
-        />
-      </View>
+      {/* Scrollable Content */}
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        style={{ paddingTop: 60 }}
+      >
+        <Text style={styles.headerTitle}>
+          {`${getGreeting()}, ${firstName ? firstName : ""}`}
+        </Text>
 
+        <Text style={styles.featuredPetText}>Featured Pets</Text>
+        {/* Featured Pets Carousel (Now Scrolls with List) */}
+        <FeaturedPetsCarousel />
+
+        <Divider style={{ marginVertical: 15 }} />
+
+        {/* List Items */}
+        {DATA.map((item, index) => (
+          <View key={index} style={styles.listItem}>
+            <Text>{item}</Text>
+          </View>
+        ))}
+      </Animated.ScrollView>
+
+      {/* Floating Button */}
       <MainButton
         onPress={() => router.push("/tabs/home/2_details")}
         title="Details"
@@ -101,6 +138,8 @@ export default function HomePage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 16,
+    backgroundColor: colors.white,
   },
   header: {
     position: "absolute",
@@ -112,7 +151,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightgraytext,
   },
   headerContent: {
     flexDirection: "row",
@@ -121,24 +162,32 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 75,
+    height: 75,
     resizeMode: "contain",
+    borderRadius: 100,
   },
   headerTitle: {
     color: "black",
     fontSize: 18,
     flex: 1,
-    textAlign: "center",
-    fontFamily: "UbuntuREgular",
+    fontFamily: "UbuntuMedium",
   },
   headerIcons: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    // borderWidth: 1,
   },
   listItem: {
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+  },
+  featuredPetText: {
+    fontFamily: "UbuntuBold",
+    fontSize: 20,
+    marginTop: 10,
   },
 });
