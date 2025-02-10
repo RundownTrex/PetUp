@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import colors from "../utils/colors";
@@ -22,14 +23,16 @@ const FeaturedPetsCarousel = () => {
     {
       id: "1",
       name: "Buddy",
-      breed: "Golden Retriever",
-      image: "https://placehold.co/600x400/000000/FFFFFF/png",
+      breed: "Sigma Dog",
+      image:
+        "https://www.dogingtonpost.com/wp-content/uploads/2018/03/dogscaping-main.jpg",
     },
     {
       id: "2",
       name: "Mittens",
       breed: "Siamese Cat",
-      image: "https://placehold.co/600x400/000000/FFFFFF/png",
+      image:
+        "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEihqTAxvRDbH_Uj3QE_A7bKfHzYrS3W4v3t_CHkzZTSQvxnWkx1Zqshgk39NA1dDgJvXkVeKnb2cTG8dSTGz_dBZtWgrKF7aXHSbo1J1oMrVZtmsHCnvDI3TE9i9lPfb36NSYGikkcu8-I/s400/siamese+cat+information.jpg",
     },
     {
       id: "3",
@@ -88,7 +91,14 @@ const FeaturedPetsCarousel = () => {
         onPress={() => router.push("/tabs/search?filter=featured")}
         style={styles.viewAllButton}
       >
-        <Text style={styles.viewAllText}>View All</Text>
+        <View style={styles.viewAllContainer}>
+          <Text style={styles.viewAllText}>View All</Text>
+          <Ionicons
+            name="arrow-forward-outline"
+            size={16}
+            color={colors.blacktext}
+          />
+        </View>
       </Pressable>
       {/* <MainButton
         title="View All"
@@ -149,10 +159,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "flex-start",
   },
-
+  viewAllContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   viewAllText: {
-    fontFamily: "UbuntuBold",
+    fontFamily: "AptosBold",
     fontSize: 16,
+    marginRight: 5,
+    color: colors.blacktext,
   },
 });
 
