@@ -12,11 +12,10 @@ const customTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: colors.accent, // Accent color for focus and outline
-    background: colors.white, // Ensure background is white
-    text: colors.blacktext, // Ensure text is black (or your desired color)
-    placeholder: "#aaa", // Adjust placeholder text color if needed
-    // You can override other properties as needed
+    primary: colors.accent, 
+    background: colors.white, 
+    text: colors.blacktext,
+    placeholder: "#aaa", 
   },
 };
 

@@ -29,6 +29,7 @@
         "expo-splash-screen",
         {
           "android": {
+            "softwareKeyboardLayoutMode": "pan",
             "backgroundColor": "#ffffff",
             "image": "./assets/AppIcons/splash-icon-light.png",
             "dark": {

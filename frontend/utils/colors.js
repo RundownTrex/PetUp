@@ -13,6 +13,7 @@ const colors = {
 
   somewhatlightback: "#424242",
   coolback: "#E0E0E0",
+  offwhite: "#F1F1F1",
 
   green: "#4BB543",
   linkblue: "#99c3ff",

@@ -6,7 +6,7 @@ import colors from "../utils/colors";
 
 const TABS = [
   { name: "home/1_index", icon: "home" },
-  { name: "search", icon: "search" },
+  { name: "search/1_index", icon: "search" },
   { name: "chat", icon: "chatbubbles" },
   { name: "profile", icon: "person" },
 ];
@@ -15,18 +15,14 @@ export default function CustomTabBar(props) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Debugging logs
-  // console.log("Current pathname:", pathname);
-
   // Hide tab bar if inside a stack screen
   const hideTabBar = ![
     "/tabs/home/1_index",
-    "/tabs/search",
+    "/tabs/search/1_index",
     "/tabs/chat",
     "/tabs/profile",
   ].includes(pathname);
 
-  // Debugging logs
   // console.log("Hide tab bar:", hideTabBar);
 
   if (hideTabBar) return null; // Hide the tab bar
