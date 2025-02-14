@@ -209,7 +209,7 @@ export default function SignInPage() {
           />
         </View>
         <Pressable onPress={forgetPassword} style={styles.forgetPassword}>
-          <Text style={{ color: colors.blacktext, fontWeight: 500 }}>
+          <Text style={{ color: colors.black, fontWeight: 500 }}>
             Forgot password?
           </Text>
         </Pressable>
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   inputContainer: { alignItems: "center" },
   button: { borderRadius: 80, marginBottom: -5 },
   signintext: {
-    color: colors.blacktext,
+    color: colors.black,
     textAlign: "center",
     fontFamily: "UbuntuMediumItalic",
   },

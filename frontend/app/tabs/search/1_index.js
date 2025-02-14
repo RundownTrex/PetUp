@@ -184,16 +184,15 @@ export default function SearchPage() {
         }
         ListHeaderComponent={
           <>
-            {/* Search bar and filters */}
             <View style={styles.searchRowContainer}>
               <Searchbar
-                placeholder="Enter search query..."
+                placeholder="Search"
                 onChangeText={setQuery}
                 value={query}
                 style={[styles.searchbar, { backgroundColor: colors.offwhite }]}
                 inputStyle={{
                   color: colors.blacktext,
-                  fontFamily: "UbuntuRegular",
+                  fontFamily: "Aptos",
                 }}
                 theme={customSearchTheme}
               />
@@ -378,7 +377,7 @@ const styles = StyleSheet.create({
   },
   searchbar: {
     flex: 1,
-    borderRadius: 25,
+    borderRadius: 10,
   },
   filterButton: {
     backgroundColor: colors.accent,

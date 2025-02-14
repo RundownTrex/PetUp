@@ -7,7 +7,7 @@ import colors from "../utils/colors";
 const TABS = [
   { name: "home/1_index", icon: "home" },
   { name: "search/1_index", icon: "search" },
-  { name: "chat", icon: "chatbubbles" },
+  { name: "chat/1_index", icon: "chatbubbles" },
   { name: "profile", icon: "person" },
 ];
 
@@ -19,7 +19,7 @@ export default function CustomTabBar(props) {
   const hideTabBar = ![
     "/tabs/home/1_index",
     "/tabs/search/1_index",
-    "/tabs/chat",
+    "/tabs/chat/1_index",
     "/tabs/profile",
   ].includes(pathname);
 

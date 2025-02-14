@@ -96,7 +96,7 @@ const FeaturedPetsCarousel = () => {
           <Ionicons
             name="arrow-forward-outline"
             size={16}
-            color={colors.blacktext}
+            color={colors.black}
           />
         </View>
       </Pressable>
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     fontFamily: "AptosBold",
     fontSize: 16,
     marginRight: 5,
-    color: colors.blacktext,
+    color: colors.black,
   },
 });
 

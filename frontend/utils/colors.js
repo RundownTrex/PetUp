@@ -1,8 +1,10 @@
 const colors = {
-  blacktext: "#000000",
-  lightgraytext: "#CCCCCC",
-  white: "#FFFFFF",
+  black: "#000000",
+  lightgray: "#CCCCCC",
   darkgray: "#999999",
+  white: "#FFFFFF",
+  offwhite: "#F1F1F1",
+  lightwhite: "#F0F0F0",
 
   accent: "#35BEA5",
   darkaccent: "#418478",
@@ -13,7 +15,6 @@ const colors = {
 
   somewhatlightback: "#424242",
   coolback: "#E0E0E0",
-  offwhite: "#F1F1F1",
 
   green: "#4BB543",
   linkblue: "#99c3ff",

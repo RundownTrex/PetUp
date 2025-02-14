@@ -28,6 +28,8 @@
     "react-native": "^0.77.0",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "^2.22.1",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-gifted-chat": "^2.6.5",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-paper": "^5.13.1",
     "react-native-portalize": "^1.0.7",

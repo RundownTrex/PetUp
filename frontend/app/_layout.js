@@ -12,10 +12,10 @@ const customTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: colors.accent, 
-    background: colors.white, 
-    text: colors.blacktext,
-    placeholder: "#aaa", 
+    primary: colors.accent,
+    background: colors.white,
+    text: colors.black,
+    placeholder: "#aaa",
   },
 };
 

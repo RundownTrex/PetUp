@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   button: { borderRadius: 80 },
   signintext: {
-    color: colors.blacktext,
+    color: colors.black,
     textAlign: "center",
     fontFamily: "UbuntuMediumItalic",
   },

@@ -295,7 +295,7 @@ export default function HomePage() {
                   <Ionicons
                     name="chevron-forward"
                     size={24}
-                    color={colors.blacktext}
+                    color={colors.black}
                   />
                   <Text style={styles.viewAllText}>View All</Text>
                 </Pressable>
@@ -401,7 +401,7 @@ export default function HomePage() {
                     style={{
                       padding: 12,
                       borderWidth: 1,
-                      borderColor: colors.lightgraytext,
+                      borderColor: colors.lightgray,
                       borderRadius: 8,
                       marginBottom: 10,
                     }}
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.lightgraytext,
+    borderBottomColor: colors.lightgray,
   },
   headerContent: {
     flexDirection: "row",
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
 
   quickActionLabel: {
     fontSize: 16,
-    color: colors.blacktext,
+    color: colors.black,
     marginTop: 5,
     textAlign: "center",
     fontFamily: "AptosBold",
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: colors.lightgraytext,
+    borderColor: colors.lightgray,
   },
   exploreMoreCardTitle: {
     fontFamily: "AptosBold",
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
     fontFamily: "AptosBold",
     fontSize: 16,
     marginTop: 5,
-    color: colors.blacktext,
+    color: colors.black,
   },
   viewAllCard: {
     width: 100,
