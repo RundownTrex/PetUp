@@ -21,9 +21,12 @@ export default function Index() {
     UbuntuLightItalic: require("../assets/fonts/Ubuntu-LightItalic.ttf"),
     UbuntuMediumItalic: require("../assets/fonts/Ubuntu-MediumItalic.ttf"),
     UbuntuBoldItalic: require("../assets/fonts/Ubuntu-BoldItalic.ttf"),
+
     Aptos: require("../assets/fonts/Microsoft Aptos Fonts/Aptos.ttf"),
     AptosBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Bold.ttf"),
+    AptosBlack: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Black.ttf"),
     AptosItalic: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Italic.ttf"),
+    AptosLight: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Light.ttf"),
     AptosExtraBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-ExtraBold.ttf"),
     AptosDisplay: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Display.ttf"),
     AptosDisplayBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Display-Bold.ttf"),

@@ -11,10 +11,12 @@
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.1.1",
     "@react-native-async-storage/async-storage": "^2.1.0",
+    "@react-native-community/datetimepicker": "^8.3.0",
     "@react-native-firebase/app": "^21.7.1",
     "@react-native-firebase/auth": "^21.7.1",
     "@react-native-firebase/firestore": "^21.7.1",
     "@react-native-google-signin/google-signin": "^13.1.0",
+    "@react-native-picker/picker": "^2.11.0",
     "babel-preset-expo": "^12.0.6",
     "date-fns": "^4.1.0",
     "expo": "~52.0.23",
@@ -27,6 +29,7 @@
     "react": "18.3.1",
     "react-native": "^0.77.0",
     "react-native-dotenv": "^3.4.11",
+    "react-native-element-dropdown": "^2.12.4",
     "react-native-gesture-handler": "^2.22.1",
     "react-native-get-random-values": "^1.11.0",
     "react-native-gifted-chat": "^2.6.5",
@@ -39,7 +42,8 @@
     "react-native-screens": "^4.6.0",
     "react-native-toast-message": "^2.2.1",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-web": "~0.19.13"
+    "react-native-web": "~0.19.13",
+    "expo-image-picker": "~16.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

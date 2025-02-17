@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { TextInput, IconButton } from "react-native-paper";
+import { TextInput } from "react-native-paper";
 import { StyleSheet } from "react-native";
 
 import colors from "../utils/colors";
@@ -12,6 +12,7 @@ export default function CustomInput({
   keyboardType = "default",
   autoCapitalize = "none",
   style,
+  disable,
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -24,8 +25,13 @@ export default function CustomInput({
       keyboardType={keyboardType}
       autoCapitalize={autoCapitalize}
       mode="outlined"
-      style={[styles.input, style]}
+      style={[
+        styles.input,
+        { backgroundColor: disable ? colors.lightwhite : colors.white },
+        style,
+      ]}
       theme={{ colors: { primary: colors.accent } }}
+      editable={!disable}
       right={
         secureTextEntry ? (
           <TextInput.Icon
@@ -43,5 +49,6 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 15,
     height: 50,
+    fontFamily: "Aptos",
   },
 });

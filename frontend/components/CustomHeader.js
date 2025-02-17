@@ -6,11 +6,10 @@ import colors from "../utils/colors";
 
 const CustomHeader = ({ title }) => {
   const navigation = useNavigation();
-  const canGoBack = navigation.canGoBack(); // Check if there's a previous screen
+  const canGoBack = navigation.canGoBack();
 
   return (
     <View style={styles.headerContainer}>
-      {/* Left Side: Back Button or Placeholder */}
       {canGoBack ? (
         <Pressable
           onPress={() => navigation.goBack()}
@@ -25,7 +24,6 @@ const CustomHeader = ({ title }) => {
       {/* Title */}
       <Text style={styles.title}>{title}</Text>
 
-      {/* Right Side (Keeps Layout Consistent) */}
       <View style={styles.headerRight} />
     </View>
   );
@@ -37,22 +35,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 45,
     paddingHorizontal: 15,
-    backgroundColor: "#fff",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: colors.white,
     shadowOffset: { height: 2, width: 0 },
-    borderBottomColor: colors.darkgray,
+    borderBottomColor: colors.lightgray,
     borderBottomWidth: 1,
   },
   backButton: {
-    width: 35, // Ensure consistent width
+    width: 35,
     alignItems: "center",
     justifyContent: "center",
   },
   placeholder: {
-    width: 35, // Same width as the back button to maintain balance
+    width: 35,
   },
   title: {
     fontSize: 18,
@@ -61,7 +55,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   headerRight: {
-    width: 35, // Same width as back button to maintain balance
+    width: 35,
   },
 });
 

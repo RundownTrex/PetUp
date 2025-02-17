@@ -8,7 +8,7 @@ const TABS = [
   { name: "home/1_index", icon: "home" },
   { name: "search/1_index", icon: "search" },
   { name: "chat/1_index", icon: "chatbubbles" },
-  { name: "profile", icon: "person" },
+  { name: "profile/1_index", icon: "person" },
 ];
 
 export default function CustomTabBar(props) {
@@ -20,7 +20,7 @@ export default function CustomTabBar(props) {
     "/tabs/home/1_index",
     "/tabs/search/1_index",
     "/tabs/chat/1_index",
-    "/tabs/profile",
+    "/tabs/profile/1_index",
   ].includes(pathname);
 
   // console.log("Hide tab bar:", hideTabBar);
