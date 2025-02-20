@@ -1,13 +1,15 @@
+import React from "react";
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
+  View,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
-
 import colors from "../utils/colors";
 
 export default MainButton = ({
+  icon,
   title,
   onPress,
   loading = false,
@@ -17,7 +19,7 @@ export default MainButton = ({
   loaderColor = "#fff",
 }) => {
   return (
-    <TouchableOpacity
+    <Pressable
       style={[styles.button, disabled && styles.disabledButton, style]}
       onPress={onPress}
       activeOpacity={0.8}
@@ -26,9 +28,12 @@ export default MainButton = ({
       {loading ? (
         <ActivityIndicator size="small" color={loaderColor} />
       ) : (
-        <Text style={[styles.buttonText, textStyle]}>{title}</Text>
+        <View style={styles.contentContainer}>
+          {icon && <View style={styles.icon}>{icon}</View>}
+          <Text style={[styles.buttonText, textStyle]}>{title}</Text>
+        </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -49,9 +54,19 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: "#BDBDBD",
   },
+  contentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  icon: {
+    marginRight: 8,
+  },
   buttonText: {
     color: colors.white,
     fontSize: 16,
     fontFamily: "AptosBold",
+    textAlign: "center", 
+    flexWrap: "wrap", 
   },
 });

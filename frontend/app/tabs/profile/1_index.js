@@ -76,7 +76,7 @@ export default function ProfilePage() {
 
           <Pressable
             style={styles.menuItem}
-            onPress={() => router.replace("/mypets")}
+            onPress={() => router.push("tabs/profile/3_mypets")}
           >
             <Ionicons name="paw-outline" size={24} color="black" />
             <Text style={styles.menuText}>My Pets</Text>

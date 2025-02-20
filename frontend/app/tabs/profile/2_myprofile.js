@@ -63,8 +63,7 @@ const ProfileScreen = () => {
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri);
       setFormChanged(true);
-      // Optionally update the Firebase user profile:
-      // await user.updateProfile({ photoURL: result.assets[0].uri });
+      // Optionally update Firebase: await user.updateProfile({ photoURL: result.assets[0].uri });
     }
   };
 
@@ -113,7 +112,6 @@ const ProfileScreen = () => {
           value={email}
           onChangeText={(text) => {
             setEmail(text);
-            // Email is read-only, but you can include here if needed.
           }}
           disable={true}
         />

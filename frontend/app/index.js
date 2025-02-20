@@ -13,7 +13,7 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [fontsLoaded] = useFonts({
-    UbuntuRegular: require("../assets/fonts/Ubuntu-Regular.ttf"),
+    Ubuntu: require("../assets/fonts/Ubuntu-Regular.ttf"),
     UbuntuBold: require("../assets/fonts/Ubuntu-Bold.ttf"),
     UbuntuLight: require("../assets/fonts/Ubuntu-Light.ttf"),
     UbuntuMedium: require("../assets/fonts/Ubuntu-Medium.ttf"),

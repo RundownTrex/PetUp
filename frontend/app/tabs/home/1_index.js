@@ -28,8 +28,6 @@ import CustomDivider from "../../../components/CustomDivider";
 import FeaturedPetsCarousel from "../../../components/FeaturedPetsCarousel";
 import colors from "../../../utils/colors";
 
-const DATA = Array.from({ length: 30 }, (_, i) => `Item ${i + 1}`); // Dummy data for scrolling
-
 export default function HomePage() {
   const router = useRouter();
   const scrollY = useSharedValue(0);
@@ -103,8 +101,8 @@ export default function HomePage() {
             .get();
 
           if (userDoc.exists) {
-            console.log("User Data:", userDoc.data()); // Debugging
-            setFirstName(userDoc.data().firstname || ""); // Ensure it's set to an empty string if undefined
+            console.log("User Data:", userDoc.data());
+            setFirstName(userDoc.data().firstname || "");
           } else {
             console.log("User document does not exist.");
           }
@@ -114,17 +112,15 @@ export default function HomePage() {
       }
     });
 
-    return () => unsubscribe(); // Cleanup on unmount
+    return () => unsubscribe();
   }, []);
 
-  // Scroll handler
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
     },
   });
 
-  // Animated style for the header
   const headerStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -152,7 +148,6 @@ export default function HomePage() {
   return (
     <>
       <View style={styles.container}>
-        {/* Collapsible Header */}
         <Animated.View style={[styles.header, headerStyle]}>
           <View style={styles.headerContent}>
             <View style={styles.headerIcons}>
@@ -235,7 +230,6 @@ export default function HomePage() {
           </View>
 
           <Text style={styles.sectionTitle}>Featured Pets</Text>
-          {/* Featured Pets Carousel (Now Scrolls with List) */}
           <FeaturedPetsCarousel />
 
           <Divider style={{ marginVertical: 15 }} />
@@ -254,7 +248,10 @@ export default function HomePage() {
                     key={listing.id}
                     style={styles.listingItem}
                     onPress={() =>
-                      router.push(`/tabs/my-listing-details/${listing.id}`)
+                      router.push({
+                        pathname: `/pets/${listing.id}`,
+                        params: { isOwner: true },
+                      })
                     }
                   >
                     <Image source={listing.image} style={styles.listingImage} />
@@ -290,7 +287,7 @@ export default function HomePage() {
                 ))}
                 <Pressable
                   style={styles.viewAllCard}
-                  onPress={() => router.push("/tabs/my-listings")}
+                  onPress={() => router.replace("/tabs/profile/3_mypets")}
                 >
                   <Ionicons
                     name="chevron-forward"
@@ -481,7 +478,7 @@ const styles = StyleSheet.create({
     // borderWidth: 1,
   },
   listItem: {
-    backgroundColor: colors.lightgray, // Adjust as needed or use a custom color
+    backgroundColor: colors.lightgray,
     padding: 12,
     borderRadius: 8,
     marginRight: 16,

@@ -311,7 +311,11 @@ export default function SearchPage() {
         renderItem={({ item }) => (
           <Pressable
             style={styles.petItem}
-            onPress={() => router.push(`/pet/${item.id}`)}
+            onPress={() =>
+              router.push({
+                pathname: `/pets/${item.id}`,
+              })
+            }
           >
             <Image source={item.image} style={styles.petImage} />
             <View style={styles.petInfo}>

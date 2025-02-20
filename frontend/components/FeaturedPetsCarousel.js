@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   petBreed: {
     fontSize: 14,
-    fontFamily: "UbuntuRegular",
+    fontFamily: "Ubuntu",
     color: "#fff",
   },
   noPetsText: {
