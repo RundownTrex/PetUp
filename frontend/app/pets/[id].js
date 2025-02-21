@@ -21,6 +21,7 @@ import Animated, {
 import colors from "../../utils/colors";
 import MainButton from "../../components/MainButton";
 import CustomHeader from "../../components/CustomHeader";
+import { router } from "expo-router";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -235,7 +236,9 @@ const PetDetailsScreen = () => {
           {isOwner ? (
             <MainButton
               title="Edit"
-              onPress={() => console.log("Editing Info")}
+              onPress={() => {
+                router.push(`/pets/editpets/`);
+              }}
             />
           ) : (
             <MainButton

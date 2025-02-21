@@ -4,7 +4,6 @@ export default function SearchLayout() {
   return (
     <Stack screenOptions={{ headerShown: false, animation: "ios_from_right" }}>
       <Stack.Screen name="1_index" options={{ title: "Search" }} />
-      <Stack.Screen name="results" options={{ title: "Results" }} />
     </Stack>
   );
 }

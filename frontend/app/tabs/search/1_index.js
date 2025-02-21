@@ -17,6 +17,9 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import colors from "../../../utils/colors";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import Slider from "@react-native-community/slider";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
 
 const customSearchTheme = {
   ...DefaultTheme,
@@ -35,6 +38,9 @@ export default function SearchPage() {
   const [ageGroup, setAgeGroup] = useState("");
   const [breed, setBreed] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  // New state for user's location and range (in KM)
+  const [userLocation, setUserLocation] = useState(null);
+  const [range, setRange] = useState(10); // default 10 KM
 
   const breedOptions = {
     Dog: ["Labrador", "Poodle", "Bulldog", "Beagle"],
@@ -54,6 +60,17 @@ export default function SearchPage() {
     }
   }, []);
 
+  // Get user's current location
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const loc = await Location.getCurrentPositionAsync({});
+        setUserLocation(loc.coords);
+      }
+    })();
+  }, []);
+
   const pets = [
     {
       id: "1",
@@ -62,6 +79,7 @@ export default function SearchPage() {
       ageGroup: "Adult",
       breed: "Labrador",
       image: require("../../../assets/test1.jpg"),
+      location: { latitude: 19.2082651403851, longitude: 73.10409884142034 },
     },
     {
       id: "2",
@@ -70,73 +88,20 @@ export default function SearchPage() {
       ageGroup: "Young",
       breed: "Persian",
       image: require("../../../assets/test2.jpg"),
+      location: { latitude: 19.215225368000404, longitude: 73.10587982819078 },
     },
     {
       id: "3",
-      name: "Coco",
-      species: "Parrot",
-      ageGroup: "Senior",
-      breed: "Parakeet",
-      image: require("../../../assets/test1.jpg"),
-    },
-    {
-      id: "4",
-      name: "Goldie",
-      species: "Fish",
-      ageGroup: "Baby",
-      breed: "Goldfish",
-      image: require("../../../assets/test2.jpg"),
-    },
-    {
-      id: "5",
-      name: "Bella",
-      species: "Dog",
-      ageGroup: "Young",
-      breed: "Poodle",
-      image: require("../../../assets/test1.jpg"),
-    },
-    {
-      id: "6",
-      name: "Max",
-      species: "Dog",
-      ageGroup: "Adult",
-      breed: "Bulldog",
-      image: require("../../../assets/test1.jpg"),
-    },
-    {
-      id: "7",
-      name: "Whiskers",
+      name: "Third",
       species: "Cat",
-      ageGroup: "Senior",
-      breed: "Siamese",
-      image: require("../../../assets/test2.jpg"),
-    },
-    {
-      id: "8",
-      name: "Polly",
-      species: "Parrot",
       ageGroup: "Young",
-      breed: "Canary",
-      image: require("../../../assets/test1.jpg"),
-    },
-    {
-      id: "9",
-      name: "Nemo",
-      species: "Fish",
-      ageGroup: "Baby",
-      breed: "Betta",
+      breed: "Persian",
       image: require("../../../assets/test2.jpg"),
-    },
-    {
-      id: "10",
-      name: "Rocky",
-      species: "Dog",
-      ageGroup: "Senior",
-      breed: "Beagle",
-      image: require("../../../assets/test1.jpg"),
+      location: { latitude: 18.924142079929755, longitude: 72.83316454012723 },
     },
   ];
 
+  // Filter pets by query and location range
   const filteredPets = pets.filter((pet) => {
     const matchesQuery =
       pet.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -146,7 +111,12 @@ export default function SearchPage() {
     const matchesType = petType
       ? pet.species.toLowerCase() === petType.toLowerCase()
       : true;
-    return matchesQuery && matchesType;
+    let distanceMatch = true;
+    if (userLocation && pet.location) {
+      const distance = getDistance(userLocation, pet.location); // in meters
+      distanceMatch = distance <= range * 1000; // convert KM to meters
+    }
+    return matchesQuery && matchesType && distanceMatch;
   });
 
   const toggleFilters = () => {
@@ -269,6 +239,21 @@ export default function SearchPage() {
                       {group}
                     </Chip>
                   ))}
+                </View>
+
+                {/* New Range slider */}
+                <View style={styles.sliderContainer}>
+                  <Text style={styles.filterLabel}>Range: {range} KM</Text>
+                  <Slider
+                    style={{ width: "100%", height: 40 }}
+                    minimumValue={1}
+                    maximumValue={50}
+                    step={1}
+                    value={range}
+                    onValueChange={setRange}
+                    minimumTrackTintColor={colors.accent}
+                    maximumTrackTintColor={colors.offwhite}
+                  />
                 </View>
 
                 {petType && breedOptions[petType] && (
@@ -403,29 +388,34 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 16,
-    color: "#333",
+    color: colors.black,
     marginBottom: 5,
+    fontFamily: "AptosMedium",
   },
   clearButtonText: {
     fontSize: 14,
-    color: colors.accent,
-    fontWeight: "600",
+    color: colors.black,
+    fontFamily: "AptosDisplayBold",
+    padding: 5,
   },
   filterLabel: {
     fontSize: 14,
-    fontWeight: "600",
     marginTop: 10,
-    color: "#333",
+    color: colors.black,
+    fontFamily: "AptosBold",
   },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 5,
   },
+  sliderContainer: {
+    marginTop: 15,
+  },
   header: {
     fontSize: 20,
     marginBottom: 15,
-    color: colors.blacktext,
+    color: colors.black,
     fontFamily: "AptosSemiBold",
   },
   petItem: {

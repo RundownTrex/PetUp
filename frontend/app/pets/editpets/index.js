@@ -12,12 +12,12 @@ import { Dropdown } from "react-native-element-dropdown";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import * as Location from "expo-location";
 
 import CustomHeader from "../../../components/CustomHeader";
 import MainButton from "../../../components/MainButton";
 import CustomInput from "../../../components/CustomInput";
 import colors from "../../../utils/colors";
+import { useRoute } from "@react-navigation/native";
 
 const petTypes = [
   "Dog",
@@ -46,26 +46,21 @@ const genderOptions = [
   { label: "Female", value: "Female" },
 ];
 
-const ageOptions = [
-  { label: "Puppy/Kitten", value: "Puppy/Kitten" },
-  { label: "Young", value: "Young" },
-  { label: "Adult", value: "Adult" },
-  { label: "Senior", value: "Senior" },
-];
-
 const sizeOptions = [
   { label: "Small", value: "Small" },
   { label: "Medium", value: "Medium" },
   { label: "Large", value: "Large" },
 ];
 
-export default function NewPet() {
+export default function EditPet() {
+  const route = useRoute();
+  const { petId } = route.params || {};
+
   const [petName, setPetName] = useState("");
   const [petSpecies, setPetSpecies] = useState("");
   const [breed, setBreed] = useState("");
   const [gender, setGender] = useState("");
   const [size, setSize] = useState("");
-  const [age, setAge] = useState("");
   const [about, setAbout] = useState("");
   const [personality, setPersonality] = useState("");
   const [vaccinations, setVaccinations] = useState("");
@@ -74,8 +69,7 @@ export default function NewPet() {
   const [petImages, setPetImages] = useState([]);
   const [ageValue, setAgeValue] = useState("");
   const [ageUnit, setAgeUnit] = useState("Month(s)");
-  const [location, setLocation] = useState(null);
-  const [address, setAddress] = useState(null);
+
 
   const handleSave = () => {
     if (
@@ -97,7 +91,7 @@ export default function NewPet() {
       });
       return;
     }
-    Alert.alert("Pet Saved", "Your new pet has been listed for adoption!");
+    Alert.alert("Pet Updated", "Your pet profile has been updated!");
   };
 
   const speciesData = petTypes.map((type) => ({ label: type, value: type }));
@@ -116,15 +110,13 @@ export default function NewPet() {
       );
       return;
     }
-    // Attempt multiple selection (supported in newer versions of expo-image-picker)
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
-      allowsMultipleSelection: true, // allows multiple selection if supported
-      selectionLimit: 0, // 0 implies no limit on selection
+      allowsMultipleSelection: true,
+      selectionLimit: 0,
     });
     if (!result.cancelled && result.assets && result.assets.length > 0) {
-      // Append all selected images to petImages
       const newImages = result.assets.map((asset) => asset.uri);
       setPetImages((prevImages) => [...prevImages, ...newImages]);
     }
@@ -141,62 +133,10 @@ export default function NewPet() {
     { label: "Year(s)", value: "Year(s)" },
   ];
 
-  const fetchLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Please allow location access to include your pet's location."
-      );
-      return;
-    }
-    const currentLocation = await Location.getCurrentPositionAsync({});
-    setLocation(currentLocation.coords);
-  };
-
-  const fetchAddress = async (coords) => {
-    let address = await Location.reverseGeocodeAsync(coords);
-    // address is an array; use address[0] to retrieve details
-    return address[0];
-  };
-
-  useEffect(() => {
-    fetchLocation();
-  }, []);
-
-  useEffect(() => {
-    if (location) {
-      (async () => {
-        const addr = await fetchAddress(location);
-        setAddress(addr);
-      })();
-    }
-  }, [location]);
-
   return (
     <>
-      <CustomHeader title="New Pet" />
+      <CustomHeader title="Edit Pet" />
       <ScrollView contentContainerStyle={styles.container}>
-        {location && (
-          <View style={styles.locationDisplay}>
-            <Text style={styles.locationText}>
-              Coordinates: {location.latitude.toFixed(4)},{" "}
-              {location.longitude.toFixed(4)}
-            </Text>
-            {address && (
-              <Text style={styles.locationText}>
-                Address: {address.name ? `${address.name}, ` : ""}
-                {address.city ? `${address.city}, ` : ""}
-                {address.region ? `${address.region}, ` : ""}
-                {address.country || ""}
-              </Text>
-            )}
-            <Text style={styles.locationNote}>
-              Note: This location will be used to inform others about your pet's
-              whereabouts.
-            </Text>
-          </View>
-        )}
         <View style={styles.imageContainer}>
           {petImages.map((uri, index) => (
             <View key={index} style={styles.imageWrapper}>
@@ -269,12 +209,7 @@ export default function NewPet() {
           onChange={(item) => setSize(item.value)}
         />
 
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View style={{ flex: 1, marginRight: 10 }}>
             <CustomInput
               label="Age"
@@ -345,75 +280,45 @@ export default function NewPet() {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
     padding: 20,
     backgroundColor: colors.white,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.darkgray,
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-    paddingLeft: 15,
-    height: 50,
-  },
   imageContainer: {
-    marginVertical: 15,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    marginTop: 0,
+    marginBottom: 15,
   },
   imageWrapper: {
     position: "relative",
-    marginRight: 10,
     marginBottom: 10,
   },
   imagePreview: {
-    width: 95,
-    height: 95,
-    borderRadius: 8,
+    width: "100%",
+    height: 200,
   },
   removeButton: {
     position: "absolute",
-    top: -5,
-    right: -5,
-    backgroundColor: colors.red,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    top: 8,
+    right: 8,
+    backgroundColor: colors.black,
+    borderRadius: 20,
+    padding: 4,
   },
   addImageButton: {
     backgroundColor: colors.accent,
     padding: 10,
     borderRadius: 5,
+    alignItems: "center",
+    marginVertical: 10,
   },
   addImageText: {
     color: colors.white,
     fontFamily: "AptosBold",
   },
-  addImageNote: {
-    marginTop: 10,
-    color: colors.darkgray,
-    fontFamily: "Aptos",
-  },
-  locationDisplay: {
-    marginBottom: 15,
-    padding: 10,
+  input: {
     borderWidth: 1,
     borderColor: colors.darkgray,
     borderRadius: 5,
-  },
-  locationText: {
-    fontFamily: "Aptos",
-    color: colors.darkgray,
-  },
-  locationNote: {
-    marginTop: 5,
-    color: colors.darkgray,
-    fontFamily: "Aptos",
+    marginVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
 });
