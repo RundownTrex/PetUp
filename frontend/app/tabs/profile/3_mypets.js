@@ -51,7 +51,7 @@ const MyPetsScreen = () => {
         )}
         <MainButton
           title="Add New Pet"
-          onPress={() => router.push("tabs/profile/addpet")}
+          onPress={() => router.push("/pets/newpets/")}
         />
       </View>
     </>

@@ -218,7 +218,7 @@ export default function HomePage() {
             <View>
               <Pressable
                 style={styles.quickActionButton}
-                onPress={() => router.push("/tabs/rehome")}
+                onPress={() => router.push("/pets/newpets/")}
               >
                 <Image
                   source={require("../../../assets/Rehome.png")}

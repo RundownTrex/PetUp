@@ -140,7 +140,7 @@ const PetDetailsScreen = () => {
             </View>
             <View style={[styles.detailBox, styles.ageBox]}>
               <Text style={styles.detailTitle}>Age</Text>
-              <Text style={styles.detailValue}>Young</Text>
+              <Text style={styles.detailValue}>5 months</Text>
             </View>
             <View style={[styles.detailBox, styles.sizeBox]}>
               <Text style={styles.detailTitle}>Size</Text>
@@ -213,9 +213,24 @@ const PetDetailsScreen = () => {
               Parainfluenza: Up-to-date{"\n"}- Adenovirus: Up-to-date
             </Text>
           </View>
+
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.sectionTitle}>Ideal Home</Text>
+            <Text style={styles.descriptionText}>
+              A loving and active environment where Luna can enjoy daily walks,
+              ample playtime, and plenty of cuddles.
+            </Text>
+          </View>
+
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.sectionTitle}>Adoption Information</Text>
+            <Text style={styles.descriptionText}>
+              Please contact to schedule a meeting and learn more about the
+              adoption process.
+            </Text>
+          </View>
         </View>
 
-        {/* Button based on ownership */}
         <View style={styles.buttonContainer}>
           {isOwner ? (
             <MainButton
@@ -255,7 +270,8 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   contentContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   petName: {
     fontSize: 22,
@@ -311,7 +327,8 @@ const styles = StyleSheet.create({
   rescueContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 15,
+    marginTop: 15,
+    marginBottom: 20,
   },
   rescueImage: {
     width: 40,
@@ -345,7 +362,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   descriptionContainer: {
-    marginVertical: 15,
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,

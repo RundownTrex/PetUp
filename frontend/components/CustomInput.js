@@ -13,8 +13,15 @@ export default function CustomInput({
   autoCapitalize = "none",
   style,
   disable,
+  multiline = false,
+  numberOfLines = 1,
+  maxLength,
 }) {
   const [showPassword, setShowPassword] = useState(false);
+  const initialHeight = multiline
+    ? styles.multilineInput.height
+    : styles.input.height;
+  const [inputHeight, setInputHeight] = useState(initialHeight);
 
   return (
     <TextInput
@@ -25,8 +32,19 @@ export default function CustomInput({
       keyboardType={keyboardType}
       autoCapitalize={autoCapitalize}
       mode="outlined"
+      multiline={multiline}
+      numberOfLines={numberOfLines}
+      maxLength={maxLength}
+      onContentSizeChange={(e) => {
+        if (multiline) {
+          setInputHeight(
+            Math.max(e.nativeEvent.contentSize.height, initialHeight)
+          );
+        }
+      }}
       style={[
         styles.input,
+        multiline && { height: inputHeight, textAlignVertical: "top" },
         { backgroundColor: disable ? colors.lightwhite : colors.white },
         style,
       ]}
@@ -50,5 +68,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     height: 50,
     fontFamily: "Aptos",
+  },
+  multilineInput: {
+    height: 80,
+    // textAlignVertical ensures the text starts from the top as height increases
+    textAlignVertical: "top",
   },
 });
