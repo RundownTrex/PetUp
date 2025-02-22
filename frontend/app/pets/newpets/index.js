@@ -7,6 +7,7 @@ import {
   View,
   Image,
   Pressable,
+  ActivityIndicator, // <-- import the ActivityIndicator
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import * as ImagePicker from "expo-image-picker";
@@ -76,6 +77,7 @@ export default function NewPet() {
   const [ageUnit, setAgeUnit] = useState("Month(s)");
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState(null);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(true);
 
   const handleSave = () => {
     if (
@@ -142,16 +144,19 @@ export default function NewPet() {
   ];
 
   const fetchLocation = async () => {
+    setIsFetchingLocation(true);
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
         "Permission required",
         "Please allow location access to include your pet's location."
       );
+      setIsFetchingLocation(false);
       return;
     }
     const currentLocation = await Location.getCurrentPositionAsync({});
     setLocation(currentLocation.coords);
+    setIsFetchingLocation(false);
   };
 
   const fetchAddress = async (coords) => {
@@ -177,26 +182,43 @@ export default function NewPet() {
     <>
       <CustomHeader title="New Pet" />
       <ScrollView contentContainerStyle={styles.container}>
-        {location && (
-          <View style={styles.locationDisplay}>
-            <Text style={styles.locationText}>
-              Coordinates: {location.latitude.toFixed(4)},{" "}
-              {location.longitude.toFixed(4)}
-            </Text>
-            {address && (
-              <Text style={styles.locationText}>
-                Address: {address.name ? `${address.name}, ` : ""}
-                {address.city ? `${address.city}, ` : ""}
-                {address.region ? `${address.region}, ` : ""}
-                {address.country || ""}
+        <View style={styles.locationDisplay}>
+          {isFetchingLocation ? (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ fontFamily: "Aptos", color: colors.darkgray }}>
+                Fetching address...
               </Text>
-            )}
-            <Text style={styles.locationNote}>
-              Note: This location will be used to inform others about your pet's
-              whereabouts.
-            </Text>
-          </View>
-        )}
+              <ActivityIndicator size="small" color={colors.accent} />
+            </View>
+          ) : location ? (
+            <>
+              <Text style={styles.locationText}>
+                Coordinates: {location.latitude.toFixed(4)},{" "}
+                {location.longitude.toFixed(4)}
+              </Text>
+              {address && (
+                <Text style={styles.locationText}>
+                  Address: {address.name ? `${address.name}, ` : ""}
+                  {address.city ? `${address.city}, ` : ""}
+                  {address.region ? `${address.region}, ` : ""}
+                  {address.country || ""}
+                </Text>
+              )}
+              <Text style={styles.locationNote}>
+                Note: This location will be used to inform others about your
+                pet's whereabouts.
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.locationText}>Location unavailable</Text>
+          )}
+        </View>
         <View style={styles.imageContainer}>
           {petImages.map((uri, index) => (
             <View key={index} style={styles.imageWrapper}>

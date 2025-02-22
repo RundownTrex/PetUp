@@ -1,7 +1,9 @@
-import React from "react";
-import { View, Pressable, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Pressable, Keyboard, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
+
+import { useBottomSheet } from "../contexts/BottomSheetContext";
 import colors from "../utils/colors";
 
 const TABS = [
@@ -12,8 +14,23 @@ const TABS = [
 ];
 
 export default function CustomTabBar(props) {
+  const { isBottomSheetOpen } = useBottomSheet();
   const router = useRouter();
   const pathname = usePathname();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true)
+    );
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false)
+    );
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   // Hide tab bar if inside a stack screen
   const hideTabBar = ![
@@ -23,9 +40,11 @@ export default function CustomTabBar(props) {
     "/tabs/profile/1_index",
   ].includes(pathname);
 
-  // console.log("Hide tab bar:", hideTabBar);
+  if (hideTabBar) return null;
 
-  if (hideTabBar) return null; // Hide the tab bar
+  if (isBottomSheetOpen) return null;
+
+  if (keyboardVisible) return null;
 
   return (
     <View style={styles.tabBarContainer}>
@@ -36,7 +55,7 @@ export default function CustomTabBar(props) {
         return (
           <Pressable
             key={tab.name}
-            onPress={() => router.push(`/tabs/${tab.name}`)} // Expo Router navigation
+            onPress={() => router.push(`/tabs/${tab.name}`)}
             style={styles.tabButton}
           >
             <Ionicons
@@ -57,7 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     height: 50,
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     elevation: 5,
     shadowColor: "#000",
     shadowOpacity: 0.1,

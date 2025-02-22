@@ -25,6 +25,7 @@ import BottomSheet, {
 
 import MainButton from "../../../components/MainButton";
 import CustomDivider from "../../../components/CustomDivider";
+import { useBottomSheet } from "../../../contexts/BottomSheetContext";
 import FeaturedPetsCarousel from "../../../components/FeaturedPetsCarousel";
 import colors from "../../../utils/colors";
 
@@ -34,6 +35,7 @@ export default function HomePage() {
   const [user, setUser] = useState(null);
   const [firstName, setFirstName] = useState("");
   const bottomSheetRef = useRef(null);
+  const { setIsBottomSheetOpen } = useBottomSheet();
   const snapPoints = useMemo(() => ["95%"], []);
   const [userListings, setUserListings] = useState([
     {
@@ -77,10 +79,12 @@ export default function HomePage() {
   ]);
 
   const showNotifications = useCallback(() => {
-    bottomSheetRef.current?.expand();
+    setIsBottomSheetOpen(true);
+    bottomSheetRef.current?.snapToIndex(1);
   }, []);
 
   const closeNotifications = useCallback(() => {
+    setIsBottomSheetOpen(false);
     bottomSheetRef.current?.close();
   }, []);
 
@@ -232,9 +236,8 @@ export default function HomePage() {
           <Text style={styles.sectionTitle}>Featured Pets</Text>
           <FeaturedPetsCarousel />
 
-          <Divider style={{ marginVertical: 15 }} />
+          <Divider style={{ marginTop: 15 }} />
 
-          {/* My Listings Section */}
           <View style={styles.myListingsContainer}>
             <Text style={styles.myListingsTitle}>My Listings</Text>
             {userListings.length > 0 ? (
@@ -312,7 +315,7 @@ export default function HomePage() {
             )}
           </View>
 
-          <Divider style={{ marginVertical: 15 }} />
+          <Divider style={{ marginVertical: 5 }} />
 
           <View style={styles.exploreMoreContainer}>
             <Text
@@ -359,7 +362,7 @@ export default function HomePage() {
               disappearsOnIndex={-1}
             />
           )}
-          enablePanDownToClose={true}
+          enablePanDownToClose={false}
         >
           <BottomSheetView
             style={{ flex: 1, backgroundColor: colors.white, padding: 16 }}

@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-export default function DetailsScreen() {
+export default function Training() {
   return (
     <View style={styles.container}>
-      <Text>Inner page of the home screen</Text>
+      <Text style={styles.text}>Training Content Goes Here</Text>
     </View>
   );
 }
@@ -14,5 +14,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  text: {
+    fontSize: 20,
   },
 });

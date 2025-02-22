@@ -86,6 +86,20 @@ export default function ProfilePage() {
               color="black"
             />
           </Pressable>
+
+          <Pressable
+            style={styles.menuItem}
+            onPress={() => router.push("tabs/profile/4_favourites")}
+          >
+            <Ionicons name="heart-outline" size={24} color="black" />
+            <Text style={styles.menuText}>Favourites</Text>
+            <MaterialIcons
+              name="keyboard-arrow-right"
+              size={24}
+              color="black"
+            />
+          </Pressable>
+
           <Pressable style={styles.menuItem}>
             <Ionicons name="shield-checkmark-outline" size={24} color="black" />
             <Text style={styles.menuText}>Account & Security</Text>

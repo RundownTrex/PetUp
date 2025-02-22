@@ -57,7 +57,7 @@ const FeaturedPetsCarousel = () => {
   const renderItem = ({ item }) => (
     <Pressable
       style={styles.card}
-      onPress={() => router.push(`/tabs/pet-details/${item.id}`)}
+      onPress={() => router.push(`/pets/${item.id}`)}
     >
       <View style={styles.imageContainer}>
         <Image source={{ uri: item.image }} style={styles.image} />

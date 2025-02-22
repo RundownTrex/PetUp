@@ -63,15 +63,10 @@ const ProfileScreen = () => {
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri);
       setFormChanged(true);
-      // Optionally update Firebase: await user.updateProfile({ photoURL: result.assets[0].uri });
     }
   };
 
-  // Function to handle saving changes
   const handleSaveChanges = async () => {
-    // TODO: Add logic to update user profile in Firebase if desired.
-    // For example: await user.updateProfile({ displayName: `${firstName} ${lastName}` });
-    // Also update phone number and gender if needed.
     setFormChanged(false);
     Alert.alert("Success", "Changes have been saved.");
   };
