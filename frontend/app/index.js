@@ -24,13 +24,13 @@ export default function Index() {
 
     Aptos: require("../assets/fonts/Microsoft Aptos Fonts/Aptos.ttf"),
     AptosBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Bold.ttf"),
-    AptosBlack: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Black.ttf"),
-    AptosItalic: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Italic.ttf"),
-    AptosLight: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Light.ttf"),
+    AptosSemiBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-SemiBold.ttf"),
     AptosExtraBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-ExtraBold.ttf"),
     AptosDisplay: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Display.ttf"),
     AptosDisplayBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Display-Bold.ttf"),
-    AptosSemiBold: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-SemiBold.ttf"),
+    AptosBlack: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Black.ttf"),
+    AptosItalic: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Italic.ttf"),
+    AptosLight: require("../assets/fonts/Microsoft Aptos Fonts/Aptos-Light.ttf"),
   });
 
   useEffect(() => {

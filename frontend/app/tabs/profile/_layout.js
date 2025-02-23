@@ -11,10 +11,6 @@ export default function ProfileLayout() {
         name="5_accountSecurity"
         options={{ title: "Account & Security" }}
       />
-      <Stack.Screen
-        name="6_helpSupport"
-        options={{ title: "Help & Support" }}
-      />
     </Stack>
   );
 }

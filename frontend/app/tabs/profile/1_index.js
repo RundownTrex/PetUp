@@ -113,7 +113,10 @@ export default function ProfilePage() {
             />
           </Pressable>
 
-          <Pressable style={styles.menuItem}>
+          <Pressable
+            style={styles.menuItem}
+            onPress={() => router.push("tabs/profile/HelpSupport")}
+          >
             <Ionicons name="help-circle-outline" size={24} color="black" />
             <Text style={styles.menuText}>Help & Support</Text>
             <MaterialIcons
@@ -237,7 +240,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     fontSize: 16,
     color: colors.black,
-    fontFamily: "Aptos",
+    fontFamily: "AptosSemiBold",
   },
   modalOverlay: {
     flex: 1,
