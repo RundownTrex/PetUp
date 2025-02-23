@@ -100,7 +100,10 @@ export default function ProfilePage() {
             />
           </Pressable>
 
-          <Pressable style={styles.menuItem}>
+          <Pressable
+            style={styles.menuItem}
+            onPress={() => router.push("tabs/profile/5_accountSecurity")}
+          >
             <Ionicons name="shield-checkmark-outline" size={24} color="black" />
             <Text style={styles.menuText}>Account & Security</Text>
             <MaterialIcons
