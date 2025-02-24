@@ -16,18 +16,19 @@ export default function SocialMedia() {
       icon: <FontAwesome name="twitter" size={32} color="#1DA1F2" />,
       link: "https://x.com/RundownTrex",
     },
-    {
-      name: "YouTube",
-      icon: <FontAwesome name="youtube-play" size={32} color="#FF0000" />,
-      link: "https://www.youtube.com/@rundowntrex",
-    },
+    // {
+    //   name: "YouTube",
+    //   icon: <FontAwesome name="youtube-play" size={32} color="#FF0000" />,
+    //   link: "https://www.youtube.com",
+    // },
   ];
 
   const handlePress = async (url) => {
     try {
-      const supported = await Linking.canOpenURL(url);
+      const encodedUrl = encodeURI(url);
+      const supported = await Linking.canOpenURL(encodedUrl);
       if (supported) {
-        await Linking.openURL(url);
+        await Linking.openURL(encodedUrl);
       } else {
         alert("Unsupported URL: " + url);
       }

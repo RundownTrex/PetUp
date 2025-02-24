@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
 
 import CustomHeader from "../../../components/CustomHeader";
@@ -20,6 +21,26 @@ export default function ProfilePage() {
   const router = useRouter();
   const user = auth().currentUser;
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(
+    user?.photoURL || "https://via.placeholder.com/100/jpg"
+  );
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const userDoc = await firestore()
+          .collection("users")
+          .doc(user.uid)
+          .get();
+        if (userDoc.exists) {
+          const data = userDoc.data();
+          setProfilePicture(data.pfpUrl || user.photoURL);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   const logout = async () => {
     try {
@@ -44,7 +65,7 @@ export default function ProfilePage() {
           <View style={styles.profileInfoContainer}>
             <Image
               source={{
-                uri: user?.photoURL || "https://via.placeholder.com/100/jpg",
+                uri: profilePicture,
               }}
               style={styles.profileImage}
             />
@@ -57,7 +78,6 @@ export default function ProfilePage() {
               </Text>
             </View>
           </View>
-          {/* <MaterialIcons name="keyboard-arrow-right" size={24} color="black" /> */}
         </View>
 
         <View style={styles.menuContainer}>

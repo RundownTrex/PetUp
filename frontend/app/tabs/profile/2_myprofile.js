@@ -9,9 +9,9 @@ import {
   Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Picker } from "@react-native-picker/picker";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 
 import colors from "../../../utils/colors";
 import CustomHeader from "../../../components/CustomHeader";
@@ -21,27 +21,36 @@ import MainButton from "../../../components/MainButton";
 const ProfileScreen = () => {
   const user = auth().currentUser;
 
-  // Initialize state values from user
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState(user?.email || "");
-  const [phoneNumber, setPhoneNumber] = useState("+1 111 467 378 399");
-  const [gender, setGender] = useState("Male");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [profileImage, setProfileImage] = useState(
     user?.photoURL || "https://via.placeholder.com/150"
   );
   const [formChanged, setFormChanged] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [imageChanged, setImageChanged] = useState(false);
 
-  // Setup first & last name from user's displayName, if available
   useEffect(() => {
-    if (user?.displayName) {
-      const nameArr = user.displayName.split(" ");
-      setFirstName(nameArr[0]);
-      setLastName(nameArr.slice(1).join(" "));
-    }
-  }, [user]);
+    const unsubscribe = firestore()
+      .collection("users")
+      .doc(user.uid)
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          setFirstName(data.firstname || "");
+          setLastName(data.lastname || "");
+          setEmail(data.email || "");
+          setPhoneNumber(data.phoneNumber || "");
+          if (data.pfpUrl) {
+            setProfileImage(data.pfpUrl);
+          }
+        }
+      });
+    return () => unsubscribe();
+  }, []);
 
-  // Function to pick and crop image from gallery
   const pickImage = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -55,20 +64,86 @@ const ProfileScreen = () => {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, // allows cropping
-      aspect: [1, 1], // square crop
+      allowsEditing: true,
+      aspect: [1, 1],
       quality: 1,
     });
 
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri);
       setFormChanged(true);
+      setImageChanged(true);
+    }
+  };
+
+  const uploadProfilePhoto = async (uri) => {
+    try {
+      const file = {
+        uri,
+        name: `${user.uid}-${Date.now()}.jpg`,
+        type: "image/jpeg",
+      };
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("uid", user.uid);
+
+      const response = await fetch("http://192.168.163.151:3000/uploadPfp", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      } else {
+        console.error("Upload failed with status", response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error uploading profile photo:", error);
+      return null;
     }
   };
 
   const handleSaveChanges = async () => {
-    setFormChanged(false);
-    Alert.alert("Success", "Changes have been saved.");
+    setLoading(true);
+    let newPhotoUrl = profileImage;
+
+    if (imageChanged) {
+      const uploadResult = await uploadProfilePhoto(profileImage);
+      if (uploadResult && uploadResult.url) {
+        newPhotoUrl = uploadResult.url;
+        setProfileImage(uploadResult.url);
+      } else {
+        Alert.alert("Error", "Profile photo upload failed.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    try {
+      await firestore()
+        .collection("users")
+        .doc(user.uid)
+        .update({
+          firstname: firstName,
+          lastname: lastName,
+          phoneNumber: phoneNumber,
+          ...(imageChanged ? { pfpUrl: newPhotoUrl } : {}),
+        });
+      Alert.alert("Success", "Changes have been saved.");
+      setFormChanged(false);
+      setImageChanged(false);
+    } catch (err) {
+      console.error("Error updating Firestore:", err);
+      Alert.alert("Error", "Failed to update your profile in Firestore.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,28 +189,20 @@ const ProfileScreen = () => {
         <CustomInput
           label="Phone Number"
           value={phoneNumber}
+          keyboardType="phone-pad"
           onChangeText={(text) => {
             setPhoneNumber(text);
             setFormChanged(true);
           }}
         />
 
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={gender}
-            onValueChange={(itemValue) => {
-              setGender(itemValue);
-              setFormChanged(true);
-            }}
-          >
-            <Picker.Item label="Male" value="Male" />
-            <Picker.Item label="Female" value="Female" />
-            <Picker.Item label="Other" value="Other" />
-          </Picker>
-        </View>
-
         {formChanged && (
-          <MainButton title="Save Changes" onPress={handleSaveChanges} />
+          <MainButton
+            title="Save Changes"
+            onPress={handleSaveChanges}
+            loading={loading}
+            disabled={loading}
+          />
         )}
       </ScrollView>
     </>
@@ -168,11 +235,6 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     padding: 6,
     backgroundColor: colors.white,
-  },
-  pickerContainer: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    marginBottom: 15,
   },
 });
 
