@@ -12,14 +12,14 @@ import {
   RefreshControl,
 } from "react-native";
 import { DefaultTheme, Searchbar, Chip } from "react-native-paper";
-import MainButton from "../../../components/MainButton";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import colors from "../../../utils/colors";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Slider from "@react-native-community/slider";
 import * as Location from "expo-location";
 import { getDistance } from "geolib";
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 
 const customSearchTheme = {
   ...DefaultTheme,
@@ -30,17 +30,37 @@ const customSearchTheme = {
   },
 };
 
+// Helper function to classify age group
+function getAgeGroup(ageValue, ageUnit) {
+  let ageInYears = 0;
+  if (ageUnit.toLowerCase().includes("month")) {
+    ageInYears = ageValue / 12;
+  } else {
+    ageInYears = ageValue;
+  }
+
+  if (ageInYears < 1) {
+    return "Baby";
+  } else if (ageInYears < 3) {
+    return "Young";
+  } else if (ageInYears < 7) {
+    return "Adult";
+  } else {
+    return "Senior";
+  }
+}
+
 export default function SearchPage() {
   const router = useRouter();
+  const [pets, setPets] = useState([]);
   const [query, setQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [petType, setPetType] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
   const [breed, setBreed] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  // New state for user's location and range (in KM)
   const [userLocation, setUserLocation] = useState(null);
-  const [range, setRange] = useState(10); // default 10 KM
+  const [range, setRange] = useState(10);
 
   const breedOptions = {
     Dog: ["Labrador", "Poodle", "Bulldog", "Beagle"],
@@ -51,84 +71,6 @@ export default function SearchPage() {
     Fish: ["Goldfish", "Betta"],
     Primate: ["Capuchin", "Marmoset"],
     Other: ["Mixed"],
-  };
-
-  useEffect(() => {
-    if (Platform.OS === "android") {
-      UIManager.setLayoutAnimationEnabledExperimental &&
-        UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
-
-  // Get user's current location
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        const loc = await Location.getCurrentPositionAsync({});
-        setUserLocation(loc.coords);
-      }
-    })();
-  }, []);
-
-  const pets = [
-    {
-      id: "1",
-      name: "Buddy",
-      species: "Dog",
-      ageGroup: "Adult",
-      breed: "Labrador",
-      image: require("../../../assets/test1.jpg"),
-      location: { latitude: 19.2082651403851, longitude: 73.10409884142034 },
-    },
-    {
-      id: "2",
-      name: "Mittens",
-      species: "Cat",
-      ageGroup: "Young",
-      breed: "Persian",
-      image: require("../../../assets/test2.jpg"),
-      location: { latitude: 19.215225368000404, longitude: 73.10587982819078 },
-    },
-    {
-      id: "3",
-      name: "Third",
-      species: "Cat",
-      ageGroup: "Young",
-      breed: "Persian",
-      image: require("../../../assets/test2.jpg"),
-      location: { latitude: 18.924142079929755, longitude: 72.83316454012723 },
-    },
-  ];
-
-  // Filter pets by query and location range
-  const filteredPets = pets.filter((pet) => {
-    const matchesQuery =
-      pet.name.toLowerCase().includes(query.toLowerCase()) ||
-      pet.species.toLowerCase().includes(query.toLowerCase()) ||
-      pet.ageGroup.toLowerCase().includes(query.toLowerCase()) ||
-      pet.breed.toLowerCase().includes(query.toLowerCase());
-    const matchesType = petType
-      ? pet.species.toLowerCase() === petType.toLowerCase()
-      : true;
-    let distanceMatch = true;
-    if (userLocation && pet.location) {
-      const distance = getDistance(userLocation, pet.location); // in meters
-      distanceMatch = distance <= range * 1000; // convert KM to meters
-    }
-    return matchesQuery && matchesType && distanceMatch;
-  });
-
-  const toggleFilters = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setShowFilters(!showFilters);
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
   };
 
   const petTypes = [
@@ -143,6 +85,92 @@ export default function SearchPage() {
   ];
 
   const ageGroups = ["Baby", "Young", "Adult", "Senior"];
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      UIManager.setLayoutAnimationEnabledExperimental &&
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const loc = await Location.getCurrentPositionAsync({});
+        setUserLocation(loc.coords);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = firestore()
+      .collection("pets")
+      .onSnapshot(
+        (snapshot) => {
+          const petsData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setPets(petsData);
+        },
+        (error) => {
+          console.error("Error fetching pets: ", error);
+        }
+      );
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    console.log(pets);
+  }, [pets]);
+
+  const filteredPets = pets.filter((pet) => {
+    const matchesQuery =
+      (pet.petName || "").toLowerCase().includes(query.toLowerCase()) ||
+      (pet.petSpecies || "").toLowerCase().includes(query.toLowerCase()) ||
+      (pet.breed || "").toLowerCase().includes(query.toLowerCase());
+    const matchesType = petType
+      ? (pet.petSpecies || "").toLowerCase() === petType.toLowerCase()
+      : true;
+    const matchesBreed = breed
+      ? (pet.breed || "").toLowerCase() === breed.toLowerCase()
+      : true;
+    // Compute the pet's age group using your helper
+    const computedAgeGroup = getAgeGroup(parseFloat(pet.ageValue), pet.ageUnit);
+    const matchesAgeGroup = ageGroup
+      ? computedAgeGroup.toLowerCase() === ageGroup.toLowerCase()
+      : true;
+
+    let distanceMatch = true;
+    if (userLocation && pet.location) {
+      const distance = getDistance(
+        { latitude: userLocation.latitude, longitude: userLocation.longitude },
+        { latitude: pet.location.latitude, longitude: pet.location.longitude }
+      );
+      distanceMatch = distance <= range * 1000;
+    }
+
+    return (
+      matchesQuery &&
+      matchesType &&
+      matchesBreed &&
+      matchesAgeGroup &&
+      distanceMatch
+    );
+  });
+
+  const toggleFilters = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setShowFilters(!showFilters);
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  };
 
   return (
     <View style={styles.container}>
@@ -216,46 +244,6 @@ export default function SearchPage() {
                   ))}
                 </View>
 
-                <Text style={styles.filterLabel}>Age Group:</Text>
-                <View style={styles.chipRow}>
-                  {ageGroups.map((group) => (
-                    <Chip
-                      key={group}
-                      selected={ageGroup === group}
-                      onPress={() =>
-                        setAgeGroup(ageGroup === group ? "" : group)
-                      }
-                      style={{
-                        backgroundColor:
-                          ageGroup === group ? colors.accent : colors.coolback,
-                        marginRight: 10,
-                      }}
-                      textStyle={{
-                        color:
-                          ageGroup === group ? colors.white : colors.blacktext,
-                      }}
-                      selectedColor={colors.white}
-                    >
-                      {group}
-                    </Chip>
-                  ))}
-                </View>
-
-                {/* New Range slider */}
-                <View style={styles.sliderContainer}>
-                  <Text style={styles.filterLabel}>Range: {range} KM</Text>
-                  <Slider
-                    style={{ width: "100%", height: 40 }}
-                    minimumValue={1}
-                    maximumValue={50}
-                    step={1}
-                    value={range}
-                    onValueChange={setRange}
-                    minimumTrackTintColor={colors.accent}
-                    maximumTrackTintColor={colors.offwhite}
-                  />
-                </View>
-
                 {petType && breedOptions[petType] && (
                   <>
                     <Text style={styles.filterLabel}>Breed:</Text>
@@ -288,27 +276,72 @@ export default function SearchPage() {
                     </View>
                   </>
                 )}
+
+                <Text style={styles.filterLabel}>Age Group:</Text>
+                <View style={styles.chipRow}>
+                  {ageGroups.map((group) => (
+                    <Chip
+                      key={group}
+                      selected={ageGroup === group}
+                      onPress={() =>
+                        setAgeGroup(ageGroup === group ? "" : group)
+                      }
+                      style={{
+                        backgroundColor:
+                          ageGroup === group ? colors.accent : colors.coolback,
+                        marginRight: 10,
+                      }}
+                      textStyle={{
+                        color:
+                          ageGroup === group ? colors.white : colors.blacktext,
+                      }}
+                      selectedColor={colors.white}
+                    >
+                      {group}
+                    </Chip>
+                  ))}
+                </View>
+
+                <View style={styles.sliderContainer}>
+                  <Text style={styles.filterLabel}>Range: {range} KM</Text>
+                  <Slider
+                    style={{ width: "100%", height: 40 }}
+                    minimumValue={1}
+                    maximumValue={50}
+                    step={1}
+                    value={range}
+                    onValueChange={setRange}
+                    minimumTrackTintColor={colors.accent}
+                    maximumTrackTintColor={colors.offwhite}
+                  />
+                </View>
               </View>
             )}
             <Text style={styles.header}>Search Results</Text>
           </>
         }
-        renderItem={({ item }) => (
-          <Pressable
-            style={styles.petItem}
-            onPress={() =>
-              router.push({
-                pathname: `/pets/${item.id}`,
-              })
-            }
-          >
-            <Image source={item.image} style={styles.petImage} />
-            <View style={styles.petInfo}>
-              <View style={styles.nameSpeciesRow}>
-                <Text style={styles.petName}>{item.name}</Text>
-                <Text style={styles.petSpecies}> ({item.species})</Text>
-              </View>
-              {item.ageGroup && (
+        renderItem={({ item }) => {
+          const ageGroup = getAgeGroup(parseFloat(item.ageValue), item.ageUnit);
+
+          return (
+            <Pressable
+              style={styles.petItem}
+              onPress={() =>
+                router.push({
+                  pathname: `/pets/${item.id}`,
+                  params: { info: item },
+                })
+              }
+            >
+              <Image
+                source={{ uri: item.petImages[0] }}
+                style={styles.petImage}
+              />
+              <View style={styles.petInfo}>
+                <View style={styles.nameSpeciesRow}>
+                  <Text style={styles.petName}>{item.petName}</Text>
+                  <Text style={styles.petSpecies}> ({item.petSpecies})</Text>
+                </View>
                 <View
                   style={{
                     flexDirection: "row",
@@ -318,11 +351,9 @@ export default function SearchPage() {
                 >
                   <Ionicons name="time" size={18} color={colors.accent} />
                   <Text style={[styles.petText, { marginLeft: 5 }]}>
-                    {item.ageGroup}
+                    {item.ageValue} {item.ageUnit} ({ageGroup})
                   </Text>
                 </View>
-              )}
-              {item.breed && (
                 <View
                   style={{
                     flexDirection: "row",
@@ -335,15 +366,15 @@ export default function SearchPage() {
                     {item.breed}
                   </Text>
                 </View>
-              )}
-            </View>
-            <Ionicons
-              name="chevron-forward"
-              size={24}
-              color={colors.darkgray}
-            />
-          </Pressable>
-        )}
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={24}
+                color={colors.darkgray}
+              />
+            </Pressable>
+          );
+        }}
         ListEmptyComponent={
           <Text style={styles.noResults}>No pets found.</Text>
         }
@@ -440,7 +471,7 @@ const styles = StyleSheet.create({
   petText: {
     fontSize: 16,
     color: colors.blacktext,
-    fontFamily: "Aptos",
+    fontFamily: "AptosSemiBold",
   },
   noResults: {
     fontSize: 16,

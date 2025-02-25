@@ -24,6 +24,8 @@ export default function ProfilePage() {
   const [profilePicture, setProfilePicture] = useState(
     user?.photoURL || "https://via.placeholder.com/100/jpg"
   );
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -35,6 +37,8 @@ export default function ProfilePage() {
         if (userDoc.exists) {
           const data = userDoc.data();
           setProfilePicture(data.pfpUrl || user.photoURL);
+          setFirstName(data.firstname);
+          setLastName(data.lastname);
         }
       }
     };
@@ -71,7 +75,7 @@ export default function ProfilePage() {
             />
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>
-                {user?.displayName || "Anonymous"}
+                {firstName} {lastName}
               </Text>
               <Text style={styles.profileEmail}>
                 {user?.email || "No Email Provided"}

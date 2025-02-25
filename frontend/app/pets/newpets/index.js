@@ -7,13 +7,15 @@ import {
   View,
   Image,
   Pressable,
-  ActivityIndicator, // <-- import the ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import * as Location from "expo-location";
+import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
 
 import CustomHeader from "../../../components/CustomHeader";
 import MainButton from "../../../components/MainButton";
@@ -78,8 +80,9 @@ export default function NewPet() {
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (
       !petName ||
       !petSpecies ||
@@ -99,7 +102,49 @@ export default function NewPet() {
       });
       return;
     }
-    Alert.alert("Pet Saved", "Your new pet has been listed for adoption!");
+    setLoading(true);
+
+    const uploadedImages = [];
+    for (const imageUri of petImages) {
+      const uploadResult = await uploadPetImage(imageUri);
+      if (uploadResult && uploadResult.url) {
+        uploadedImages.push(uploadResult.url);
+      } else {
+        Alert.alert("Error", "One or more pet images failed to upload.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const petData = {
+      petName,
+      petSpecies,
+      breed,
+      gender,
+      size,
+      ageValue,
+      ageUnit,
+      about,
+      personality,
+      vaccinations,
+      idealHome,
+      adoptionInfo,
+      petImages: uploadedImages, 
+      location,
+      address,
+      createdAt: firestore.FieldValue.serverTimestamp(),
+      ownerId: auth().currentUser.uid,
+    };
+
+    try {
+      await firestore().collection("pets").add(petData);
+      Alert.alert("Pet Saved", "Your new pet has been listed for adoption!");
+    } catch (error) {
+      console.error("Error saving pet info:", error);
+      Alert.alert("Error", "There was a problem saving your pet information.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const speciesData = petTypes.map((type) => ({ label: type, value: type }));
@@ -118,15 +163,13 @@ export default function NewPet() {
       );
       return;
     }
-    // Attempt multiple selection (supported in newer versions of expo-image-picker)
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
-      allowsMultipleSelection: true, // allows multiple selection if supported
-      selectionLimit: 0, // 0 implies no limit on selection
+      allowsMultipleSelection: true,
+      selectionLimit: 8,
     });
     if (!result.cancelled && result.assets && result.assets.length > 0) {
-      // Append all selected images to petImages
       const newImages = result.assets.map((asset) => asset.uri);
       setPetImages((prevImages) => [...prevImages, ...newImages]);
     }
@@ -161,7 +204,6 @@ export default function NewPet() {
 
   const fetchAddress = async (coords) => {
     let address = await Location.reverseGeocodeAsync(coords);
-    // address is an array; use address[0] to retrieve details
     return address[0];
   };
 
@@ -177,6 +219,42 @@ export default function NewPet() {
       })();
     }
   }, [location]);
+
+  const uploadPetImage = async (uri) => {
+    try {
+      const file = {
+        uri,
+        name: `${auth().currentUser.uid}-${Date.now()}.jpg`,
+        type: "image/jpeg",
+      };
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("uid", auth().currentUser.uid);
+
+      const response = await fetch(
+        "http://192.168.163.151:3000/uploadPetImage",
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        return data; 
+      } else {
+        console.error("Upload pet image failed with status", response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error uploading pet image:", error);
+      return null;
+    }
+  };
 
   return (
     <>
@@ -359,7 +437,12 @@ export default function NewPet() {
           multiline={true}
         />
 
-        <MainButton title="Save Pet" onPress={handleSave} />
+        <MainButton
+          title="Save Pet"
+          onPress={handleSave}
+          loading={loading}
+          disabled={loading}
+        />
       </ScrollView>
     </>
   );

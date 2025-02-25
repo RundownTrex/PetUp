@@ -36,7 +36,39 @@ app.post("/uploadPfp", upload.single("file"), async (req, res) => {
     const uploadResponse = await imagekit.upload({
       file: base64File,
       fileName: randomFileName,
-      folder: folderPath, 
+      folder: folderPath,
+      useUniqueFileName: false,
+      overwriteFile: false,
+      filePath: `${folderPath}/${randomFileName}`,
+    });
+
+    return res.json(uploadResponse);
+  } catch (error) {
+    console.error("Upload failed:", error);
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
+app.post("/uploadPetImage", upload.single("file"), async (req, res) => {
+  try {
+    const uid = req.body.uid;
+    if (!uid) {
+      throw new Error("UID is required");
+    }
+    // Convert file buffer to base64 string
+    const fileBuffer = req.file.buffer;
+    const base64File = fileBuffer.toString("base64");
+
+    // Set the folder to "pets/{uid}"
+    const folderPath = `pets/${uid}`;
+
+    // Generate a random file name (or you can include an index if needed)
+    const randomFileName = `${uid}-${Date.now()}.jpg`;
+
+    const uploadResponse = await imagekit.upload({
+      file: base64File,
+      fileName: randomFileName,
+      folder: folderPath,
       useUniqueFileName: false,
       overwriteFile: false,
       filePath: `${folderPath}/${randomFileName}`,

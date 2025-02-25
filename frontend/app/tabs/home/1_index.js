@@ -326,7 +326,7 @@ export default function HomePage() {
             <View style={styles.exploreMoreCardContainer}>
               <Pressable
                 style={styles.exploreMoreCard}
-                onPress={() => router.push("/tabs/pet-care-tips")}
+                onPress={() => router.push("/tabs/home/2_caretips")}
               >
                 <Ionicons name="book" size={24} color={colors.accent} />
                 <Text style={styles.exploreMoreCardTitle}>Care Tips</Text>
@@ -336,7 +336,7 @@ export default function HomePage() {
               </Pressable>
               <Pressable
                 style={styles.exploreMoreCard}
-                onPress={() => router.push("/tabs/pet-training-videos")}
+                onPress={() => router.push("/tabs/home/3_training")}
               >
                 <Ionicons name="videocam" size={24} color={colors.accent} />
                 <Text style={styles.exploreMoreCardTitle}>Training</Text>
@@ -480,12 +480,7 @@ const styles = StyleSheet.create({
     width: "100%",
     // borderWidth: 1,
   },
-  listItem: {
-    backgroundColor: colors.lightgray,
-    padding: 12,
-    borderRadius: 8,
-    marginRight: 16,
-  },
+
   sectionTitle: {
     fontFamily: "AptosBold",
     fontSize: 20,
@@ -554,28 +549,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  myListingCard: {
-    marginRight: 16,
-    backgroundColor: colors.white,
-    borderRadius: 8,
-    padding: 10,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  myListingImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-  },
-  myListingLabel: {
-    fontFamily: "Aptos",
-    fontSize: 16,
-    marginTop: 5,
-  },
   myListingsContainer: {
     paddingVertical: 10,
   },
