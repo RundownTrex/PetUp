@@ -126,6 +126,8 @@ export default function SearchPage() {
   }, [pets]);
 
   const filteredPets = pets.filter((pet) => {
+    if (pet.ownerId === auth().currentUser.uid) return false;
+
     const matchesQuery =
       (pet.petName || "").toLowerCase().includes(query.toLowerCase()) ||
       (pet.petSpecies || "").toLowerCase().includes(query.toLowerCase()) ||
@@ -326,12 +328,13 @@ export default function SearchPage() {
           return (
             <Pressable
               style={styles.petItem}
-              onPress={() =>
+              onPress={() => {
+                console.log(item);
                 router.push({
                   pathname: `/pets/${item.id}`,
-                  params: { info: item },
-                })
-              }
+                  params: { pet: JSON.stringify(item), isOwner: false },
+                });
+              }}
             >
               <Image
                 source={{ uri: item.petImages[0] }}

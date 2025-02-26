@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import {
   GiftedChat,
   Bubble,
@@ -9,42 +9,29 @@ import {
 } from "react-native-gifted-chat";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+
+import { useBottomSheet } from "../../../contexts/BottomSheetContext";
 import colors from "../../../utils/colors";
 
 const ChatScreen = () => {
   const router = useRouter();
-  const { chat } = useLocalSearchParams();
-  const chatInfo = useMemo(() => (chat ? JSON.parse(chat) : {}), [chat]);
+  const { owner } = useLocalSearchParams();
+  const ownerData = useMemo(() => (owner ? JSON.parse(owner) : {}), [owner]);
   const [messages, setMessages] = useState([]);
+  const { setIsBottomSheetOpen } = useBottomSheet();
 
   useEffect(() => {
-    console.log(chatInfo);
-  }, [chatInfo]);
+    console.log("Owner Data:", ownerData);
+  }, [ownerData]);
 
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: `Welcome to ${chatInfo.name}'s chat!`,
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: chatInfo.name,
-          avatar: chatInfo.avatar,
-        },
-      },
-      {
-        _id: 2,
-        text: "Hello! How can we help you today?",
-        createdAt: new Date(),
-        user: {
-          _id: 3,
-          name: chatInfo.name,
-          avatar: "https://placehold.co/50/png",
-        },
-      },
-    ]);
-  }, [chatInfo]);
+    setIsBottomSheetOpen(true);
+    setMessages([]);
+
+    return () => {
+      setIsBottomSheetOpen(false);
+    };
+  }, [ownerData]);
 
   const onSend = useCallback((newMessages = []) => {
     setMessages((previousMessages) =>
@@ -92,19 +79,16 @@ const ChatScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons
             name="chevron-back-outline"
             size={24}
             color={colors.black}
           />
-        </TouchableOpacity>
-        <Image source={{ uri: chatInfo.avatar }} style={styles.avatar} />
+        </Pressable>
+        <Image source={{ uri: ownerData.pfpUrl }} style={styles.avatar} />
         <Text style={styles.headerText} numberOfLines={1} ellipsizeMode="tail">
-          {chatInfo.name}
+          {`${ownerData.firstname} ${ownerData.lastname}`}
         </Text>
         <View style={styles.rightPlaceholder} />
       </View>

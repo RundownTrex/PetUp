@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontFamily: "AptosBold",
-    textAlign: "center", 
-    flexWrap: "wrap", 
+    textAlign: "center",
+    flexWrap: "wrap",
   },
 });

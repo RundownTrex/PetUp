@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,15 +8,20 @@ import {
   Dimensions,
   Modal,
   Pressable,
+  Linking,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 
 import colors from "../../utils/colors";
 import MainButton from "../../components/MainButton";
@@ -27,21 +32,77 @@ const { width: screenWidth } = Dimensions.get("window");
 
 const PetDetailsScreen = () => {
   const route = useRoute();
-  const { isOwner } = route.params || {};
+  // const { isOwner } = route.params || {};
+  const { pet } = route.params || {};
 
-  // Sample array of pet images
-  const petImages = [
-    "https://placehold.co/300x300/png?text=Image+1",
-    "https://placehold.co/300x300/png?text=Image+2",
-    "https://placehold.co/300x300/png?text=Image+3",
-    "https://placehold.co/300x300/png?text=Image+4",
-    "https://placehold.co/300x300/png?text=Image+5",
-    "https://placehold.co/300x300/png?text=Image+6",
-  ];
-
+  const petData = JSON.parse(pet);
+  const [isOwner, setIsOwner] = useState(false);
+  const [ownerData, setOwnerData] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permission to access location was denied");
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation(location.coords);
+      console.log(location.coords);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (petData?.ownerId) {
+      setIsOwner(petData.ownerId === auth().currentUser.uid);
+
+      const unsubscribe = firestore()
+        .collection("users")
+        .doc(petData.ownerId)
+        .onSnapshot(
+          (doc) => {
+            if (doc.exists) {
+              console.log(doc.data());
+              setOwnerData(doc.data());
+            }
+          },
+          (error) => console.error("Error fetching owner data:", error)
+        );
+      return () => unsubscribe();
+    }
+  }, [petData?.ownerId]);
+
+  useEffect(() => {
+    console.log(petData);
+  }, [petData]);
+
+  useEffect(() => {
+    const userId = auth().currentUser.uid;
+    const unsubscribe = firestore()
+      .collection("users")
+      .doc(userId)
+      .onSnapshot(
+        (doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            if (data.favorites && Array.isArray(data.favorites)) {
+              setIsFavorite(data.favorites.includes(petData.id));
+            }
+          }
+        },
+        (error) => {
+          console.error("Error fetching favorites:", error);
+        }
+      );
+
+    return () => unsubscribe();
+  }, [petData.id]);
+
+  const petImages = petData.petImages || [];
 
   const scale = useSharedValue(1);
 
@@ -49,12 +110,82 @@ const PetDetailsScreen = () => {
     transform: [{ scale: scale.value }],
   }));
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
+  const toggleFavorite = async () => {
+    const newFavoriteStatus = !isFavorite;
+    setIsFavorite(newFavoriteStatus);
+
     scale.value = withSpring(1.2, { damping: 5, stiffness: 200 }, () => {
       scale.value = withSpring(1, { damping: 5, stiffness: 200 });
     });
+
+    const userId = auth().currentUser.uid;
+    const petId = petData.id; 
+
+    try {
+      if (newFavoriteStatus) {
+        await firestore()
+          .collection("users")
+          .doc(userId)
+          .update({
+            favorites: firestore.FieldValue.arrayUnion(petId),
+          });
+      } else {
+        await firestore()
+          .collection("users")
+          .doc(userId)
+          .update({
+            favorites: firestore.FieldValue.arrayRemove(petId),
+          });
+      }
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+    }
   };
+
+  const openMaps = () => {
+    const { latitude, longitude } = petData.location || {};
+    if (latitude && longitude) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+      Linking.openURL(url);
+    } else {
+      alert("Location not available");
+    }
+  };
+
+  const emailAdopter = () => {
+    const email = ownerData ? ownerData.email : null;
+    console.log("Pressed");
+    if (email) {
+      const subject = encodeURIComponent(`Inquiry about ${petData.petName}`);
+      const body = encodeURIComponent(
+        `Hello,\n\nI'm interested in learning more about ${petData.petName}. Please let me know if it's still available.\n\nThank you.`
+      );
+      const url = `mailto:${email}?subject=${subject}&body=${body}`;
+      Linking.openURL(url);
+    } else {
+      alert("Email address not available");
+    }
+  };
+
+  const callAdopter = () => {
+    const phone = ownerData ? ownerData.phoneNumber : null;
+    if (phone) {
+      const url = `tel:${phone}`;
+      Linking.openURL(url);
+    } else {
+      alert("Phone number not available");
+    }
+  };
+
+  const distanceInMeters = userLocation
+    ? getDistance(
+        { latitude: userLocation.latitude, longitude: userLocation.longitude },
+        {
+          latitude: petData.location.latitude,
+          longitude: petData.location.longitude,
+        }
+      )
+    : null;
 
   return (
     <>
@@ -64,10 +195,10 @@ const PetDetailsScreen = () => {
           <Carousel
             loop
             width={screenWidth}
-            height={300}
+            height={400}
             autoPlay={true}
             data={petImages}
-            scrollAnimationDuration={1000}
+            scrollAnimationDuration={1800}
             renderItem={({ item, index }) => (
               <Pressable
                 activeOpacity={0.8}
@@ -93,7 +224,12 @@ const PetDetailsScreen = () => {
           )}
         </View>
 
-        <Modal visible={showModal} transparent={false} animationType="slide">
+        <Modal
+          visible={showModal}
+          transparent={false}
+          animationType="slide"
+          onRequestClose={() => setShowModal(false)}
+        >
           <View style={styles.modalContainer}>
             <Pressable
               style={styles.closeButton}
@@ -128,107 +264,105 @@ const PetDetailsScreen = () => {
 
         <View style={styles.contentContainer}>
           <Text style={styles.petName}>
-            Luna <Text style={styles.petBreed}>(Chihuahua)</Text>
+            {petData.petName}{" "}
+            <Text style={styles.petBreed}>
+              ({petData.petSpecies} - {petData.breed})
+            </Text>
           </Text>
           <View style={styles.locationRow}>
             <FontAwesome name="map-marker" size={16} color={colors.accent} />
-            <Text style={styles.markerText}>1.2 km</Text>
+            {distanceInMeters !== null ? (
+              <Text style={styles.markerText}>
+                {(distanceInMeters / 1000).toFixed(2)} km away
+              </Text>
+            ) : (
+              <Text style={styles.markerText}>Calculating distance...</Text>
+            )}
           </View>
           <View style={styles.detailRow}>
             <View style={[styles.detailBox, styles.genderBox]}>
               <Text style={styles.detailTitle}>Gender</Text>
-              <Text style={styles.detailValue}>Female</Text>
+              <Text style={styles.detailValue}>{petData.gender}</Text>
             </View>
             <View style={[styles.detailBox, styles.ageBox]}>
               <Text style={styles.detailTitle}>Age</Text>
-              <Text style={styles.detailValue}>5 months</Text>
+              <Text style={styles.detailValue}>
+                {petData.ageValue} {petData.ageUnit}
+              </Text>
             </View>
             <View style={[styles.detailBox, styles.sizeBox]}>
               <Text style={styles.detailTitle}>Size</Text>
-              <Text style={styles.detailValue}>Small</Text>
+              <Text style={styles.detailValue}>{petData.size}</Text>
             </View>
           </View>
-
-          {/* Rescue Center Information */}
-          <View style={styles.rescueContainer}>
+          <Pressable style={styles.userContainer} onPress={openMaps}>
             <Image
-              source={{ uri: "https://placehold.co/40/png" }}
-              style={styles.rescueImage}
+              source={{
+                uri: ownerData
+                  ? ownerData.pfpUrl || "https://placehold.co/40/png"
+                  : "https://placehold.co/40/png",
+              }}
+              style={styles.userPfp}
             />
-            <View>
-              <Text style={styles.rescueName}>Happy Tails Animal Rescue</Text>
-              <Text style={styles.rescueAddress}>
-                123 Paws Street, NYC, NY 10001
+            <View
+              style={{
+                flex: 1,
+              }}
+            >
+              <Text style={styles.userName}>
+                {ownerData
+                  ? `${ownerData.firstname} ${ownerData.lastname}`
+                  : "Loading..."}
+              </Text>
+              <Text
+                style={styles.userAddress}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {petData.address.formattedAddress}
               </Text>
             </View>
             <View style={styles.navigateIconContainer}>
               <Ionicons name="navigate" size={24} color="black" />
             </View>
-          </View>
-
+          </Pressable>
           {!isOwner && (
             <View style={styles.contactContainer}>
               <View style={styles.buttonWrapper}>
                 <MainButton
                   title="Email Adopter"
                   icon={<FontAwesome name="envelope" size={16} color="white" />}
-                  onPress={() => {
-                    // Add code to open email client with adopter's email
-                  }}
+                  onPress={() => emailAdopter()}
                 />
               </View>
               <View style={styles.buttonWrapper}>
                 <MainButton
                   title="Call Adopter"
                   icon={<FontAwesome name="phone" size={16} color="white" />}
-                  onPress={() => {
-                    // Add code to initiate a phone call to the adopter
-                  }}
+                  onPress={() => callAdopter()}
                 />
               </View>
             </View>
           )}
-
           <View style={styles.descriptionContainer}>
-            <Text style={styles.sectionTitle}>About Luna</Text>
-            <Text style={styles.descriptionText}>
-              Luna is a cheerful pet who loves to play and cuddle. She is
-              well-trained, vaccinated, and looking for a forever home.
-            </Text>
+            <Text style={styles.sectionTitle}>About {petData.petName}</Text>
+            <Text style={styles.descriptionText}>{petData.about}</Text>
           </View>
-
-          <View>
+          <View style={styles.descriptionContainer}>
             <Text style={styles.sectionTitle}>Personality & Habits</Text>
-            <Text style={styles.descriptionText}>
-              Luna is playful, friendly, and curious. She loves exploring new
-              places, enjoys long walks, and has a habit of greeting everyone
-              with a wagging tail. Her calm nature and affectionate behavior
-              make her a perfect companion.
-            </Text>
+            <Text style={styles.descriptionText}>{petData.personality}</Text>
           </View>
-
           <View style={styles.descriptionContainer}>
             <Text style={styles.sectionTitle}>Vaccination Records</Text>
-            <Text style={styles.descriptionText}>
-              - Rabies: Up-to-date{"\n"}- Distemper: Up-to-date{"\n"}-
-              Parainfluenza: Up-to-date{"\n"}- Adenovirus: Up-to-date
-            </Text>
+            <Text style={styles.descriptionText}>{petData.vaccinations}</Text>
           </View>
-
           <View style={styles.descriptionContainer}>
             <Text style={styles.sectionTitle}>Ideal Home</Text>
-            <Text style={styles.descriptionText}>
-              A loving and active environment where Luna can enjoy daily walks,
-              ample playtime, and plenty of cuddles.
-            </Text>
+            <Text style={styles.descriptionText}>{petData.idealHome}</Text>
           </View>
-
           <View style={styles.descriptionContainer}>
             <Text style={styles.sectionTitle}>Adoption Information</Text>
-            <Text style={styles.descriptionText}>
-              Please contact to schedule a meeting and learn more about the
-              adoption process.
-            </Text>
+            <Text style={styles.descriptionText}>{petData.adoptionInfo}</Text>
           </View>
         </View>
 
@@ -243,7 +377,15 @@ const PetDetailsScreen = () => {
           ) : (
             <MainButton
               title="Contact Owner"
-              onPress={() => console.log("Contacting owner")}
+              onPress={() => {
+                router.back();
+                router.push({
+                  pathname: `/tabs/chat/${ownerData.id}`,
+                  params: {
+                    owner: JSON.stringify(ownerData),
+                  },
+                });
+              }}
             />
           )}
         </View>
@@ -262,7 +404,8 @@ const styles = StyleSheet.create({
   },
   petImage: {
     width: "100%",
-    height: 300,
+    height: 400,
+    resizeMode: "cover",
   },
   favoriteIcon: {
     position: "absolute",
@@ -326,30 +469,30 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 16,
     fontFamily: "AptosDisplayBold",
+    textAlign: "center",
   },
-  rescueContainer: {
+  userContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 15,
     marginBottom: 20,
   },
-  rescueImage: {
+  userPfp: {
     width: 40,
     height: 40,
     borderRadius: 20,
     marginRight: 10,
   },
-  rescueName: {
+  userName: {
     fontSize: 16,
     fontFamily: "AptosBold",
   },
-  rescueAddress: {
+  userAddress: {
     fontSize: 14,
     color: colors.darkgray,
     fontFamily: "Aptos",
   },
   navigateIconContainer: {
-    flex: 1,
     alignItems: "flex-end",
   },
   contactContainer: {

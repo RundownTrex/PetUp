@@ -21,6 +21,7 @@ import CustomHeader from "../../../components/CustomHeader";
 import MainButton from "../../../components/MainButton";
 import CustomInput from "../../../components/CustomInput";
 import colors from "../../../utils/colors";
+import { router } from "expo-router";
 
 const petTypes = [
   "Dog",
@@ -129,7 +130,7 @@ export default function NewPet() {
       vaccinations,
       idealHome,
       adoptionInfo,
-      petImages: uploadedImages, 
+      petImages: uploadedImages,
       location,
       address,
       createdAt: firestore.FieldValue.serverTimestamp(),
@@ -139,6 +140,7 @@ export default function NewPet() {
     try {
       await firestore().collection("pets").add(petData);
       Alert.alert("Pet Saved", "Your new pet has been listed for adoption!");
+      router.back();
     } catch (error) {
       console.error("Error saving pet info:", error);
       Alert.alert("Error", "There was a problem saving your pet information.");
@@ -245,7 +247,7 @@ export default function NewPet() {
 
       if (response.ok) {
         const data = await response.json();
-        return data; 
+        return data;
       } else {
         console.error("Upload pet image failed with status", response.status);
         return null;

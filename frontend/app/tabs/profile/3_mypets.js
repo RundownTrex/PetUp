@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,19 +6,46 @@ import {
   Pressable,
   StyleSheet,
   Image,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
+import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
 import CustomHeader from "../../../components/CustomHeader";
 import MainButton from "../../../components/MainButton";
 import colors from "../../../utils/colors";
 
 const MyPetsScreen = () => {
   const router = useRouter();
+  const [pets, setPets] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [pets, setPets] = useState([
-    { id: "1", name: "Buddy", image: "https://placehold.co/100/png" },
-    { id: "2", name: "Mittens", image: "https://placehold.co/100/png" },
-  ]);
+  useEffect(() => {
+    const uid = auth().currentUser.uid;
+    const unsubscribe = firestore()
+      .collection("pets")
+      .where("ownerId", "==", uid)
+      .onSnapshot(
+        (snapshot) => {
+          const myPets = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setPets(myPets);
+        },
+        (error) => {
+          console.error("Error fetching my pets: ", error);
+        }
+      );
+    return () => unsubscribe();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  };
 
   const renderPetItem = ({ item }) => (
     <Pressable
@@ -26,12 +53,15 @@ const MyPetsScreen = () => {
       onPress={() =>
         router.push({
           pathname: `/pets/${item.id}`,
-          params: { isOwner: true },
+          params: { pet: JSON.stringify(item), isOwner: true },
         })
       }
     >
-      <Image source={{ uri: item.image }} style={styles.petImage} />
-      <Text style={styles.petName}>{item.name}</Text>
+      <Image
+        source={{ uri: item.petImages ? item.petImages[0] : item.image }}
+        style={styles.petImage}
+      />
+      <Text style={styles.petName}>{item.petName}</Text>
     </Pressable>
   );
 
@@ -45,6 +75,9 @@ const MyPetsScreen = () => {
             renderItem={renderPetItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.petsList}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           />
         ) : (
           <Text style={styles.emptyText}>No pets listed for adoption.</Text>
@@ -83,6 +116,7 @@ const styles = StyleSheet.create({
   petName: {
     fontSize: 16,
     color: colors.black,
+    fontFamily: "UbuntuMedium",
   },
   emptyText: {
     textAlign: "center",
