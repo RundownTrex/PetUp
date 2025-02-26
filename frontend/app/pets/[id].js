@@ -9,6 +9,7 @@ import {
   Modal,
   Pressable,
   Linking,
+  Alert,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -186,6 +187,31 @@ const PetDetailsScreen = () => {
       )
     : null;
 
+  const handleMarkAsAdopted = () => {
+    Alert.alert(
+      "Confirm Adoption",
+      "Are you sure you want to mark this pet as adopted?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              await firestore()
+                .collection("pets")
+                .doc(petData.id)
+                .update({ adopted: true });
+              alert("Pet marked as adopted!");
+            } catch (error) {
+              console.error("Error updating adoption status:", error);
+              alert("There was an error marking the pet as adopted.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <>
       <CustomHeader title="Pet Details" />
@@ -195,9 +221,9 @@ const PetDetailsScreen = () => {
             loop
             width={screenWidth}
             height={400}
-            autoPlay={true}
-            data={petImages}
+            autoPlay={petImages.length > 1}
             scrollAnimationDuration={1800}
+            data={petImages}
             renderItem={({ item, index }) => (
               <Pressable
                 activeOpacity={0.8}
@@ -206,7 +232,14 @@ const PetDetailsScreen = () => {
                   setShowModal(true);
                 }}
               >
-                <Image source={{ uri: item }} style={styles.petImage} />
+                <View style={styles.imageWrapper}>
+                  <Image source={{ uri: item }} style={styles.petImage} />
+                  {petData.adopted && (
+                    <View style={styles.adoptedOverlay}>
+                      <Text style={styles.adoptedOverlayText}>Adopted</Text>
+                    </View>
+                  )}
+                </View>
               </Pressable>
             )}
           />
@@ -370,23 +403,32 @@ const PetDetailsScreen = () => {
 
         <View style={styles.buttonContainer}>
           {isOwner ? (
-            <MainButton
-              title="Edit"
-              onPress={() => {
-                router.push(`/pets/editpets/`);
-              }}
-            />
+            <>
+              {!petData.adopted && (
+                <MainButton
+                  title="Mark as Adopted"
+                  onPress={handleMarkAsAdopted}
+                  style={{ marginBottom: 10 }}
+                />
+              )}
+              <MainButton
+                title="Edit"
+                onPress={() => {
+                  router.push({
+                    pathname: `/pets/editpets/`,
+                    params: { pet: JSON.stringify(petData) },
+                  });
+                }}
+              />
+            </>
           ) : (
             <MainButton
               title="Contact Owner"
               onPress={() => {
-                console.log(petData.ownerId);
                 router.back();
                 router.push({
                   pathname: `/tabs/chat/${petData.ownerId}`,
-                  params: {
-                    owner: JSON.stringify(ownerData),
-                  },
+                  params: { owner: JSON.stringify(ownerData) },
                 });
               }}
             />
@@ -551,6 +593,24 @@ const styles = StyleSheet.create({
   },
   activeThumbnail: {
     borderColor: colors.accent,
+  },
+  imageWrapper: {
+    position: "relative",
+  },
+  adoptedOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  adoptedOverlayText: {
+    color: colors.white,
+    fontSize: 24,
+    fontFamily: "UbuntuBold",
   },
 });
 

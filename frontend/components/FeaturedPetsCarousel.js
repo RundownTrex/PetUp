@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,60 +10,60 @@ import {
 import Carousel from "react-native-reanimated-carousel";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
 
 import colors from "../utils/colors";
-import MainButton from "./MainButton";
 
 const { width, height } = Dimensions.get("window");
 
 const FeaturedPetsCarousel = () => {
   const router = useRouter();
+  const [featuredPets, setFeaturedPets] = useState([]);
+  const currentUid = auth().currentUser.uid;
 
-  const featuredPets = [
-    {
-      id: "1",
-      name: "Buddy",
-      breed: "Sigma Dog",
-      image:
-        "https://www.dogingtonpost.com/wp-content/uploads/2018/03/dogscaping-main.jpg",
-    },
-    {
-      id: "2",
-      name: "Mittens",
-      breed: "Siamese Cat",
-      image:
-        "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEihqTAxvRDbH_Uj3QE_A7bKfHzYrS3W4v3t_CHkzZTSQvxnWkx1Zqshgk39NA1dDgJvXkVeKnb2cTG8dSTGz_dBZtWgrKF7aXHSbo1J1oMrVZtmsHCnvDI3TE9i9lPfb36NSYGikkcu8-I/s400/siamese+cat+information.jpg",
-    },
-    {
-      id: "3",
-      name: "Charlie",
-      breed: "Beagle",
-      image: "https://placehold.co/600x400/000000/FFFFFF/png",
-    },
-    {
-      id: "4",
-      name: "Bella",
-      breed: "Persian Cat",
-      image: "https://placehold.co/600x400/000000/FFFFFF/png",
-    },
-    {
-      id: "5",
-      name: "Max",
-      breed: "Bulldog",
-      image: "https://placehold.co/600x400/000000/FFFFFF/png",
-    },
-  ];
+  useEffect(() => {
+    const unsubscribe = firestore()
+      .collection("pets")
+      .orderBy("createdAt", "desc")
+      .onSnapshot(
+        (snapshot) => {
+          const pets = [];
+          snapshot.forEach((doc) => {
+            const pet = {
+              id: doc.id,
+              ...doc.data(),
+            };
+            if (pet.adopted) return;
+            if (pet.ownerId === currentUid) return;
+            pets.push(pet);
+          });
+          setFeaturedPets(pets.slice(0, 3));
+        },
+        (error) => {
+          console.error("Error fetching featured pets:", error);
+        }
+      );
+    return () => unsubscribe();
+  }, [currentUid]);
 
   const renderItem = ({ item }) => (
     <Pressable
       style={styles.card}
-      onPress={() => router.push(`/pets/${item.id}`)}
+      onPress={() =>
+        router.push({
+          pathname: `/pets/${item.id}`,
+          params: { pet: JSON.stringify(item) },
+        })
+      }
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: item.image }} style={styles.image} />
+        <Image source={{ uri: item.petImages[0] }} style={styles.image} />
         <View style={styles.overlay}>
-          <Text style={styles.petName}>{item.name}</Text>
-          <Text style={styles.petBreed}>{item.breed}</Text>
+          <Text style={styles.petName}>{item.petName}</Text>
+          <Text style={styles.petBreed}>
+            {item.breed} {item.petSpecies}
+          </Text>
         </View>
       </View>
     </Pressable>
@@ -76,7 +76,7 @@ const FeaturedPetsCarousel = () => {
           <Carousel
             loop
             width={width}
-            height={height * 0.27}
+            height={height * 0.33}
             autoPlay
             autoPlayInterval={3000}
             data={featuredPets}
@@ -100,11 +100,6 @@ const FeaturedPetsCarousel = () => {
           />
         </View>
       </Pressable>
-      {/* <MainButton
-        title="View All"
-        onPress={() => router.push("/tabs/search?filter=featured")}
-        style={styles.viewAllButton}
-      /> */}
     </>
   );
 };
@@ -122,13 +117,14 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: "100%",
-    height: 175,
+    height: "100%",
     borderRadius: 10,
     overflow: "hidden",
   },
   image: {
     width: "100%",
     height: "100%",
+    resizeMode: "cover",
   },
   overlay: {
     position: "absolute",
@@ -142,13 +138,12 @@ const styles = StyleSheet.create({
   petName: {
     fontSize: 16,
     fontFamily: "UbuntuBold",
-    color: "#fff",
-    borderColor: colors.white,
+    color: colors.white,
   },
   petBreed: {
     fontSize: 14,
     fontFamily: "Ubuntu",
-    color: "#fff",
+    color: colors.white,
   },
   noPetsText: {
     textAlign: "left",

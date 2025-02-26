@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -12,11 +12,14 @@ import { Dropdown } from "react-native-element-dropdown";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 
 import CustomHeader from "../../../components/CustomHeader";
 import MainButton from "../../../components/MainButton";
 import CustomInput from "../../../components/CustomInput";
 import colors from "../../../utils/colors";
+import { router } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 
 const petTypes = [
@@ -54,7 +57,12 @@ const sizeOptions = [
 
 export default function EditPet() {
   const route = useRoute();
-  const { petId } = route.params || {};
+
+  const { pet } = route.params || {};
+
+  const petData = useMemo(() => {
+    return pet ? JSON.parse(pet) : {};
+  }, [pet]);
 
   const [petName, setPetName] = useState("");
   const [petSpecies, setPetSpecies] = useState("");
@@ -69,9 +77,114 @@ export default function EditPet() {
   const [petImages, setPetImages] = useState([]);
   const [ageValue, setAgeValue] = useState("");
   const [ageUnit, setAgeUnit] = useState("Month(s)");
+  const [initialValues, setInitialValues] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (petData) {
+      setPetName(petData.petName || "");
+      setPetSpecies(petData.petSpecies || "");
+      setBreed(petData.breed || "");
+      setGender(petData.gender || "");
+      setSize(petData.size || "");
+      setAbout(petData.about || "");
+      setPersonality(petData.personality || "");
+      setVaccinations(petData.vaccinations || "");
+      setIdealHome(petData.idealHome || "");
+      setAdoptionInfo(petData.adoptionInfo || "");
+      setPetImages(petData.petImages || []);
+      setAgeValue(petData.ageValue ? petData.ageValue.toString() : "");
+      setAgeUnit(petData.ageUnit || "Month(s)");
 
-  const handleSave = () => {
+      setInitialValues({
+        petName: petData.petName || "",
+        petSpecies: petData.petSpecies || "",
+        breed: petData.breed || "",
+        gender: petData.gender || "",
+        size: petData.size || "",
+        about: petData.about || "",
+        personality: petData.personality || "",
+        vaccinations: petData.vaccinations || "",
+        idealHome: petData.idealHome || "",
+        adoptionInfo: petData.adoptionInfo || "",
+        petImages: petData.petImages || [],
+        ageValue: petData.ageValue ? petData.ageValue.toString() : "",
+        ageUnit: petData.ageUnit || "Month(s)",
+      });
+    }
+  }, [petData]);
+
+  const isChanged = useMemo(() => {
+    if (!initialValues) return false;
+    return (
+      petName !== initialValues.petName ||
+      petSpecies !== initialValues.petSpecies ||
+      breed !== initialValues.breed ||
+      gender !== initialValues.gender ||
+      size !== initialValues.size ||
+      about !== initialValues.about ||
+      personality !== initialValues.personality ||
+      vaccinations !== initialValues.vaccinations ||
+      idealHome !== initialValues.idealHome ||
+      adoptionInfo !== initialValues.adoptionInfo ||
+      JSON.stringify(petImages) !== JSON.stringify(initialValues.petImages) ||
+      ageValue !== initialValues.ageValue ||
+      ageUnit !== initialValues.ageUnit
+    );
+  }, [
+    initialValues,
+    petName,
+    petSpecies,
+    breed,
+    gender,
+    size,
+    about,
+    personality,
+    vaccinations,
+    idealHome,
+    adoptionInfo,
+    petImages,
+    ageValue,
+    ageUnit,
+  ]);
+
+  const uploadPetImage = async (uri) => {
+    try {
+      const file = {
+        uri,
+        name: `${auth().currentUser.uid}-${Date.now()}.jpg`,
+        type: "image/jpeg",
+      };
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("uid", auth().currentUser.uid);
+
+      const response = await fetch(
+        "http://192.168.221.151:3000/uploadPetImage",
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      } else {
+        console.error("Upload pet image failed with status", response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error uploading pet image:", error);
+      return null;
+    }
+  };
+
+  const handleSave = async () => {
     if (
       !petName ||
       !petSpecies ||
@@ -91,7 +204,52 @@ export default function EditPet() {
       });
       return;
     }
-    Alert.alert("Pet Updated", "Your pet profile has been updated!");
+    setLoading(true);
+
+    const uploadedImages = [];
+    for (const imageUri of petImages) {
+      const uploadResult = await uploadPetImage(imageUri);
+      if (uploadResult && uploadResult.url) {
+        uploadedImages.push(uploadResult.url);
+      } else {
+        Alert.alert("Error", "One or more pet images failed to upload.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const updatedPetData = {
+      petName,
+      petSpecies,
+      breed,
+      gender,
+      size,
+      ageValue,
+      ageUnit,
+      about,
+      personality,
+      vaccinations,
+      idealHome,
+      adoptionInfo,
+      petImages: uploadedImages,
+    };
+
+    try {
+      await firestore()
+        .collection("pets")
+        .doc(petData.id)
+        .update(updatedPetData);
+      Alert.alert("Pet Updated", "Your pet profile has been updated!");
+      router.back();
+    } catch (error) {
+      console.error("Error updating pet info:", error);
+      Alert.alert(
+        "Error",
+        "There was a problem updating your pet information."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const speciesData = petTypes.map((type) => ({ label: type, value: type }));
@@ -156,13 +314,11 @@ export default function EditPet() {
             Please add landscape images of your pet.
           </Text>
         </View>
-
         <CustomInput
           label="Pet Name"
           value={petName}
           onChangeText={setPetName}
         />
-
         <Dropdown
           style={styles.input}
           data={speciesData}
@@ -176,7 +332,6 @@ export default function EditPet() {
             setBreed("");
           }}
         />
-
         {petSpecies !== "" && (
           <Dropdown
             style={styles.input}
@@ -188,7 +343,6 @@ export default function EditPet() {
             onChange={(item) => setBreed(item.value)}
           />
         )}
-
         <Dropdown
           style={styles.input}
           data={genderOptions}
@@ -198,7 +352,6 @@ export default function EditPet() {
           value={gender}
           onChange={(item) => setGender(item.value)}
         />
-
         <Dropdown
           style={styles.input}
           data={sizeOptions}
@@ -208,7 +361,6 @@ export default function EditPet() {
           value={size}
           onChange={(item) => setSize(item.value)}
         />
-
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View style={{ flex: 1, marginRight: 10 }}>
             <CustomInput
@@ -231,7 +383,6 @@ export default function EditPet() {
             />
           </View>
         </View>
-
         <CustomInput
           label="About the Pet"
           placeholder="About the Pet"
@@ -239,7 +390,6 @@ export default function EditPet() {
           onChangeText={setAbout}
           multiline={true}
         />
-
         <CustomInput
           label="Personality & Habits"
           placeholder="Personality & Habits"
@@ -247,7 +397,6 @@ export default function EditPet() {
           onChangeText={setPersonality}
           multiline={true}
         />
-
         <CustomInput
           label="Vaccination Records"
           placeholder="Vaccination Records"
@@ -255,7 +404,6 @@ export default function EditPet() {
           onChangeText={setVaccinations}
           multiline={true}
         />
-
         <CustomInput
           label="Ideal Home"
           placeholder="Ideal Home"
@@ -263,7 +411,6 @@ export default function EditPet() {
           onChangeText={setIdealHome}
           multiline={true}
         />
-
         <CustomInput
           label="Adoption Information"
           placeholder="Adoption Information"
@@ -271,8 +418,14 @@ export default function EditPet() {
           onChangeText={setAdoptionInfo}
           multiline={true}
         />
-
-        <MainButton title="Save Pet" onPress={handleSave} />
+        {isChanged && (
+          <MainButton
+            title="Save info"
+            onPress={handleSave}
+            loading={loading}
+            disabled={loading}
+          />
+        )}
       </ScrollView>
     </>
   );
@@ -280,45 +433,59 @@ export default function EditPet() {
 
 const styles = StyleSheet.create({
   container: {
+    flexGrow: 1,
     padding: 20,
     backgroundColor: colors.white,
-  },
-  imageContainer: {
-    marginBottom: 15,
-  },
-  imageWrapper: {
-    position: "relative",
-    marginBottom: 10,
-  },
-  imagePreview: {
-    width: "100%",
-    height: 200,
-  },
-  removeButton: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: colors.black,
-    borderRadius: 20,
-    padding: 4,
-  },
-  addImageButton: {
-    backgroundColor: colors.accent,
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  addImageText: {
-    color: colors.white,
-    fontFamily: "AptosBold",
   },
   input: {
     borderWidth: 1,
     borderColor: colors.darkgray,
     borderRadius: 5,
-    marginVertical: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    padding: 10,
+    marginBottom: 15,
+    paddingLeft: 15,
+    height: 50,
+  },
+  imageContainer: {
+    marginVertical: 15,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    marginTop: 0,
+  },
+  imageWrapper: {
+    position: "relative",
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  imagePreview: {
+    width: 95,
+    height: 95,
+    borderRadius: 8,
+  },
+  removeButton: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: colors.red,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addImageButton: {
+    backgroundColor: colors.accent,
+    padding: 10,
+    borderRadius: 5,
+  },
+  addImageText: {
+    color: colors.white,
+    fontFamily: "AptosBold",
+  },
+  addImageNote: {
+    marginTop: 10,
+    color: colors.darkgray,
+    fontFamily: "Aptos",
   },
 });

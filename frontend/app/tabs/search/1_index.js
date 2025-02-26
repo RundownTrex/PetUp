@@ -127,6 +127,7 @@ export default function SearchPage() {
 
   const filteredPets = pets.filter((pet) => {
     if (pet.ownerId === auth().currentUser.uid) return false;
+    if (pet.adopted) return false;
 
     const matchesQuery =
       (pet.petName || "").toLowerCase().includes(query.toLowerCase()) ||
@@ -138,14 +139,14 @@ export default function SearchPage() {
     const matchesBreed = breed
       ? (pet.breed || "").toLowerCase() === breed.toLowerCase()
       : true;
-    // Compute the pet's age group using your helper
+
     const computedAgeGroup = getAgeGroup(parseFloat(pet.ageValue), pet.ageUnit);
     const matchesAgeGroup = ageGroup
       ? computedAgeGroup.toLowerCase() === ageGroup.toLowerCase()
       : true;
 
     let distanceMatch = true;
-    if (userLocation && pet.location) {
+    if (userLocation && pet.location && range < 100) {
       const distance = getDistance(
         { latitude: userLocation.latitude, longitude: userLocation.longitude },
         { latitude: pet.location.latitude, longitude: pet.location.longitude }
@@ -167,11 +168,21 @@ export default function SearchPage() {
     setShowFilters(!showFilters);
   };
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
+
+    try {
+      const snapshot = await firestore().collection("pets").get();
+      const petsData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPets(petsData);
+    } catch (error) {
+      console.error("Error refreshing pets: ", error);
+    }
+
+    setRefreshing(false);
   };
 
   return (
@@ -305,12 +316,14 @@ export default function SearchPage() {
                 </View>
 
                 <View style={styles.sliderContainer}>
-                  <Text style={styles.filterLabel}>Range: {range} KM</Text>
+                  <Text style={styles.filterLabel}>
+                    Range: {range === 100 ? "Max" : `${range} KM`}
+                  </Text>
                   <Slider
                     style={{ width: "100%", height: 40 }}
-                    minimumValue={1}
-                    maximumValue={50}
-                    step={1}
+                    minimumValue={5} 
+                    maximumValue={100}
+                    step={5} 
                     value={range}
                     onValueChange={setRange}
                     minimumTrackTintColor={colors.accent}
@@ -424,7 +437,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.black,
     marginBottom: 5,
-    fontFamily: "AptosMedium",
+    fontFamily: "AptosBold",
   },
   clearButtonText: {
     fontSize: 14,
@@ -436,7 +449,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 10,
     color: colors.black,
-    fontFamily: "AptosBold",
+    fontFamily: "AptosSemiBold",
   },
   chipRow: {
     flexDirection: "row",
