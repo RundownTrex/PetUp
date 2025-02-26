@@ -34,43 +34,10 @@ export default function HomePage() {
   const scrollY = useSharedValue(0);
   const [user, setUser] = useState(null);
   const [firstName, setFirstName] = useState("");
+  const [userListings, setUserListings] = useState([]);
   const bottomSheetRef = useRef(null);
   const { setIsBottomSheetOpen } = useBottomSheet();
   const snapPoints = useMemo(() => ["95%"], []);
-  const [userListings, setUserListings] = useState([
-    {
-      id: "1",
-      name: "Buddy",
-      image: require("../../../assets/test1.jpg"),
-      breed: "Golden Retriever",
-      age: "2 years",
-      postedDate: "01/02/2025",
-    },
-    {
-      id: "2",
-      name: "Mittens",
-      image: require("../../../assets/test2.jpg"),
-      breed: "Siamese Cat",
-      age: "1 year",
-      postedDate: "15/02/2025",
-    },
-    {
-      id: "3",
-      name: "Charlie",
-      image: require("../../../assets/test1.jpg"),
-      breed: "Labrador",
-      age: "3 years",
-      postedDate: "20/02/2025",
-    },
-    {
-      id: "4",
-      name: "Whiskers",
-      image: require("../../../assets/test2.jpg"),
-      breed: "Persian Cat",
-      age: "4 years",
-      postedDate: "25/02/2025",
-    },
-  ]);
 
   const [notifications, setNotifications] = useState([
     { id: "1", text: "New pet posting available" },
@@ -78,26 +45,10 @@ export default function HomePage() {
     { id: "3", text: "Reminder: Update your profile" },
   ]);
 
-  const showNotifications = useCallback(() => {
-    setIsBottomSheetOpen(true);
-    bottomSheetRef.current?.snapToIndex(1);
-  }, []);
-
-  const closeNotifications = useCallback(() => {
-    setIsBottomSheetOpen(false);
-    bottomSheetRef.current?.close();
-  }, []);
-
-  const clearNotifications = useCallback(() => {
-    setNotifications([]);
-  }, []);
-
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // console.log("User ID:", currentUser.uid);
-
         try {
           const userDoc = await firestore()
             .collection("users")
@@ -115,8 +66,42 @@ export default function HomePage() {
         }
       }
     });
-
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      const unsubscribeListings = firestore()
+        .collection("pets")
+        .where("ownerId", "==", user.uid)
+        .onSnapshot(
+          (snapshot) => {
+            const listings = [];
+            snapshot.forEach((doc) =>
+              listings.push({ id: doc.id, ...doc.data() })
+            );
+            setUserListings(listings);
+          },
+          (error) => {
+            console.error("Error fetching listings:", error);
+          }
+        );
+      return () => unsubscribeListings();
+    }
+  }, [user]);
+
+  const showNotifications = useCallback(() => {
+    setIsBottomSheetOpen(true);
+    bottomSheetRef.current?.snapToIndex(1);
+  }, []);
+
+  const closeNotifications = useCallback(() => {
+    setIsBottomSheetOpen(false);
+    bottomSheetRef.current?.close();
+  }, []);
+
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
   }, []);
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -253,38 +238,44 @@ export default function HomePage() {
                     onPress={() =>
                       router.push({
                         pathname: `/pets/${listing.id}`,
-                        params: { isOwner: true },
+                        params: { pet: JSON.stringify(listing) },
                       })
                     }
                   >
-                    <Image source={listing.image} style={styles.listingImage} />
+                    <Image
+                      source={{ uri: listing.petImages[0] }}
+                      style={styles.listingImage}
+                    />
                     <Text
                       style={styles.listingName}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {listing.name}
+                      {listing.petName}
                     </Text>
                     <Text
                       style={styles.listingDetails}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {listing.breed}
+                      {listing.petSpecies} - {listing.breed}
                     </Text>
                     <Text
                       style={styles.listingDetails}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {listing.age}
+                      {listing.ageValue} {listing.ageUnit}
                     </Text>
                     <Text
                       style={styles.listingDate}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      Posted: {listing.postedDate}
+                      Posted:{" "}
+                      {listing.createdAt
+                        ? listing.createdAt.toDate().toDateString()
+                        : "Not available"}
                     </Text>
                   </Pressable>
                 ))}
@@ -478,7 +469,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    // borderWidth: 1,
   },
 
   sectionTitle: {
@@ -598,7 +588,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   listingName: {
-    fontFamily: "UbuntuMedium",
+    fontFamily: "UbuntuBold",
     fontSize: 16,
     marginTop: 5,
     width: "100%",

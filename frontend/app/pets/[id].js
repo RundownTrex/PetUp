@@ -32,7 +32,6 @@ const { width: screenWidth } = Dimensions.get("window");
 
 const PetDetailsScreen = () => {
   const route = useRoute();
-  // const { isOwner } = route.params || {};
   const { pet } = route.params || {};
 
   const petData = JSON.parse(pet);
@@ -119,7 +118,7 @@ const PetDetailsScreen = () => {
     });
 
     const userId = auth().currentUser.uid;
-    const petId = petData.id; 
+    const petId = petData.id;
 
     try {
       if (newFavoriteStatus) {
@@ -246,6 +245,7 @@ const PetDetailsScreen = () => {
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.thumbnailScroll}
+              contentContainerStyle={{ alignItems: "center" }}
             >
               {petImages.map((img, idx) => (
                 <Pressable key={idx} onPress={() => setSelectedIndex(idx)}>
@@ -269,16 +269,18 @@ const PetDetailsScreen = () => {
               ({petData.petSpecies} - {petData.breed})
             </Text>
           </Text>
-          <View style={styles.locationRow}>
-            <FontAwesome name="map-marker" size={16} color={colors.accent} />
-            {distanceInMeters !== null ? (
-              <Text style={styles.markerText}>
-                {(distanceInMeters / 1000).toFixed(2)} km away
-              </Text>
-            ) : (
-              <Text style={styles.markerText}>Calculating distance...</Text>
-            )}
-          </View>
+          {!isOwner && (
+            <View style={styles.locationRow}>
+              <FontAwesome name="map-marker" size={16} color={colors.accent} />
+              {distanceInMeters !== null ? (
+                <Text style={styles.markerText}>
+                  {(distanceInMeters / 1000).toFixed(2)} km away
+                </Text>
+              ) : (
+                <Text style={styles.markerText}>Calculating distance...</Text>
+              )}
+            </View>
+          )}
           <View style={styles.detailRow}>
             <View style={[styles.detailBox, styles.genderBox]}>
               <Text style={styles.detailTitle}>Gender</Text>
@@ -378,9 +380,10 @@ const PetDetailsScreen = () => {
             <MainButton
               title="Contact Owner"
               onPress={() => {
+                console.log(petData.ownerId);
                 router.back();
                 router.push({
-                  pathname: `/tabs/chat/${ownerData.id}`,
+                  pathname: `/tabs/chat/${petData.ownerId}`,
                   params: {
                     owner: JSON.stringify(ownerData),
                   },

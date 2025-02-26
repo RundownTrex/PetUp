@@ -21,6 +21,10 @@ export default function TabLayout() {
     }
   }, [signUpWEmail]);
 
+  useEffect(() => {
+    console.log("Current path:", pathname);
+  }, [pathname]);
+
   return (
     <>
       <CustomPopup

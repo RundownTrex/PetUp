@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,67 +9,120 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
 
 import colors from "../../../utils/colors";
 import CustomHeader from "../../../components/CustomHeader";
 
-const initialPets = [
-  {
-    id: "1",
-    name: "Mochi",
-    species: "Dog",
-    distance: "1.2 km",
-    breed: "Abyssinian",
-    image: "https://placehold.co/300x150/png?text=Mochi",
-  },
-  {
-    id: "2",
-    name: "Clover",
-    species: "Cat",
-    distance: "1.2 km",
-    breed: "Fauve de Bourgogne",
-    image: "https://placehold.co/300x150/png?text=Clover",
-  },
-  {
-    id: "3",
-    name: "Cleo",
-    species: "Cat",
-    distance: "1.5 km",
-    breed: "Manx",
-    image: "https://placehold.co/300x150/png?text=Cleo",
-  },
-  {
-    id: "4",
-    name: "Luna",
-    species: "Dog",
-    distance: "1.2 km",
-    breed: "Chihuahua",
-    image: "https://placehold.co/300x150/png?text=Luna",
-  },
-  {
-    id: "5",
-    name: "Bella",
-    species: "Dog",
-    distance: "0.5 km",
-    breed: "Golden Retriever",
-    image: "https://placehold.co/300x150/png?text=Bella",
-  },
-];
-
 const FavoritesScreen = () => {
   const router = useRouter();
-  const [favorites, setFavorites] = useState(initialPets);
+  const [favorites, setFavorites] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const userId = auth().currentUser.uid;
+
+  // Fetch user's current location
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation(location.coords);
+      } else {
+        console.log("Location permission not granted");
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribeUser = firestore()
+      .collection("users")
+      .doc(userId)
+      .onSnapshot(
+        (doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            const favIds = data.favorites || [];
+            console.log("Favorite IDs:", favIds);
+            if (favIds.length > 0) {
+              firestore()
+                .collection("pets")
+                .where(firestore.FieldPath.documentId(), "in", favIds)
+                .get()
+                .then((querySnapshot) => {
+                  const petList = [];
+                  querySnapshot.forEach((docSnapshot) => {
+                    const petItem = {
+                      id: docSnapshot.id,
+                      ...docSnapshot.data(),
+                    };
+                    if (petItem.location) {
+                      if (userLocation) {
+                        const dist = getDistance(
+                          {
+                            latitude: userLocation.latitude,
+                            longitude: userLocation.longitude,
+                          },
+                          {
+                            latitude: petItem.location.latitude,
+                            longitude: petItem.location.longitude,
+                          }
+                        );
+                        petItem.distance = (dist / 1000).toFixed(2) + " km";
+                      } else {
+                        petItem.distance = "...";
+                      }
+                    } else {
+                      petItem.distance = "N/A";
+                    }
+                    petList.push(petItem);
+                  });
+                  setFavorites(petList);
+                })
+                .catch((error) => {
+                  console.error("Error fetching favorite pets:", error);
+                });
+            } else {
+              setFavorites([]);
+            }
+          }
+        },
+        (error) => {
+          console.error("Error fetching user favorites:", error);
+        }
+      );
+
+    return () => {
+      unsubscribeUser();
+    };
+  }, [userId, userLocation]);
 
   const removeFavorite = (petId) => {
-    setFavorites(favorites.filter((pet) => pet.id !== petId));
+    firestore()
+      .collection("users")
+      .doc(userId)
+      .update({
+        favorites: firestore.FieldValue.arrayRemove(petId),
+      })
+      .catch((error) => console.error("Error removing favorite:", error));
   };
 
   const renderItem = ({ item }) => (
     <Pressable
       style={styles.card}
-      onPress={() => router.push(`/pets/${item.id}`)}
+      onPress={() =>
+        router.push({
+          pathname: `/pets/${item.id}`,
+          params: {
+            pet: JSON.stringify(item),
+            isOwner: false,
+          },
+        })
+      }
     >
-      <Image source={{ uri: item.image }} style={styles.image} />
+      <Image source={{ uri: item.petImages[0] }} style={styles.image} />
       <Pressable
         style={styles.favoriteIcon}
         onPress={(e) => {
@@ -80,7 +133,7 @@ const FavoritesScreen = () => {
         <Ionicons name="heart" size={24} color="red" />
       </Pressable>
       <Text numberOfLines={1} ellipsizeMode="tail" style={styles.name}>
-        {item.name}
+        {item.petName}
       </Text>
       <View style={styles.infoContainer}>
         <Ionicons name="location" size={16} color={colors.accent} />
@@ -90,7 +143,7 @@ const FavoritesScreen = () => {
       </View>
       <View style={styles.infoContainer}>
         <Text numberOfLines={2} ellipsizeMode="tail" style={styles.info}>
-          {item.species} - {item.breed}
+          {item.petSpecies} - {item.breed}
         </Text>
       </View>
     </Pressable>
@@ -98,7 +151,7 @@ const FavoritesScreen = () => {
 
   const handleRefresh = () => {
     console.log("Refresh favorites list");
-    // Refresh logic goes here (e.g. re-fetch favourited items)
+    // Optionally, you can trigger a manual re-fetch here if needed.
   };
 
   return (
@@ -107,13 +160,18 @@ const FavoritesScreen = () => {
       <View style={styles.container}>
         <FlatList
           data={favorites}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           numColumns={2}
           renderItem={renderItem}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.list}
           onRefresh={handleRefresh}
           refreshing={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No favorites found.</Text>
+            </View>
+          }
         />
       </View>
     </>
@@ -172,6 +230,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.darkgray,
     marginLeft: 5,
+    fontFamily: "Aptos",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.darkgray,
     fontFamily: "Aptos",
   },
 });
