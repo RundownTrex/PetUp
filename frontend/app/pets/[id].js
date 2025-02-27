@@ -428,7 +428,10 @@ const PetDetailsScreen = () => {
                 router.back();
                 router.push({
                   pathname: `/tabs/chat/${petData.ownerId}`,
-                  params: { owner: JSON.stringify(ownerData) },
+                  params: {
+                    owner: JSON.stringify(ownerData),
+                    ownerId: petData.ownerId,
+                  },
                 });
               }}
             />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -9,93 +9,144 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Searchbar, DefaultTheme } from "react-native-paper";
+import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
 import colors from "../../../utils/colors";
-
-const chatData = [
-  {
-    id: "1",
-    name: "Happy Tails Animal Rescue",
-    message: "Hi, of course. You can come dire...",
-    time: "09:41",
-    avatar: "https://placehold.co/50/png",
-    unread: 1,
-  },
-  {
-    id: "2",
-    name: "City Critters Adoption Center",
-    message: "Haha, yes I've seen your profile, it's very interesting",
-    time: "08:25",
-    avatar: "https://placehold.co/50/png",
-    unread: 3,
-  },
-  {
-    id: "3",
-    name: "Purr Haven Shelter",
-    message: "Wow, this is really epic 👍",
-    time: "Yesterday",
-    avatar: "https://placehold.co/50/png",
-    unread: 2,
-  },
-  {
-    id: "4",
-    name: "Metro Paws Animal Sanctuary Big Big Name And Text",
-    message: "Wow love it! ❤️",
-    time: "Dec 21, 20...",
-    avatar: "https://placehold.co/50/png",
-    unread: 0,
-  },
-
-  {
-    id: "5",
-    name: "New Chat Example",
-    message: "This is a new chat message.",
-    time: "Just now",
-    avatar: "https://placehold.co/50/png",
-    unread: 1,
-  },
-];
 
 export default function Chat() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [recentChats, setRecentChats] = useState([]);
+
+  const currentUser = auth().currentUser;
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const unsubscribe = firestore()
+      .collection("recentChats")
+      .where("participantIds", "array-contains", currentUser.uid)
+      .orderBy("lastMessageTime", "desc")
+      .onSnapshot(
+        (snapshot) => {
+          const chats = [];
+          if (snapshot) {
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+
+              // Reconstruct participants object manually
+              const participants = Object.keys(data)
+                .filter((key) => key.startsWith("participants."))
+                .reduce((acc, key) => {
+                  const userId = key.split(".")[1]; // Extract user ID
+                  acc[userId] = data[key]; // Assign participant data
+                  return acc;
+                }, {});
+
+              chats.push({
+                id: doc.id,
+                ...data,
+                participants,
+              });
+            });
+          }
+          console.log("Fetched document:", JSON.stringify(chats, null, 2));
+          setRecentChats(chats);
+        },
+        (error) => {
+          console.error("Error fetching recent chats:", error);
+        }
+      );
+
+    return () => unsubscribe();
+  }, [currentUser]);
 
   const onChangeSearch = (query) => setSearchQuery(query);
 
-  const filteredChats = chatData.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredChats = recentChats.filter((chat) => {
+    if (!chat.participantIds || !chat.participants) return false;
 
-  const renderItem = ({ item }) => (
-    <Pressable
-      style={styles.chatItem}
-      onPress={() =>
-        router.push({
-          pathname: `tabs/chat/${item.id}`,
-          params: { chat: JSON.stringify(item) },
-        })
-      }
-    >
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
-      <View style={styles.chatContent}>
-        <View style={styles.chatHeader}>
-          <Text style={styles.chatName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={styles.chatTime}>{item.time}</Text>
+    const otherParticipantId = chat.participantIds.find(
+      (id) => id !== currentUser.uid
+    );
+
+    if (!otherParticipantId) return false;
+
+    const otherParticipant = chat.participants[otherParticipantId];
+
+    if (!otherParticipant || !otherParticipant.name) return false;
+
+    return otherParticipant.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+  });
+  const renderItem = ({ item }) => {
+    console.log("Rendering item:", item);
+    console.log("participantIds:", item.participantIds);
+
+    // Find the other participant by comparing with current user's ID
+    const otherParticipantId = item.participantIds?.find(
+      (id) => id !== currentUser.uid
+    );
+
+    console.log("My ID: ", currentUser.uid);
+    console.log("Other participant's ID: ", otherParticipantId);
+
+    const otherParticipant = item.participants?.[otherParticipantId] || {};
+    console.log("Other participant data:", otherParticipant);
+
+    const myParticipantInfo = item.participants?.[currentUser.uid] || {};
+    console.log("My info: ", myParticipantInfo);
+
+    return (
+      <Pressable
+        style={styles.chatItem}
+        onPress={() =>
+          router.push({
+            pathname: `tabs/chat/${item.chatId}`,
+            params: { ownerId: otherParticipantId },
+          })
+        }
+      >
+        <Image
+          source={{
+            uri: otherParticipant.avatar || "https://placehold.co/50/png",
+          }}
+          style={styles.avatar}
+        />
+        <View style={styles.chatContent}>
+          <View style={styles.chatHeader}>
+            <Text style={styles.chatName} numberOfLines={1}>
+              {otherParticipant.name || "Unknown"}
+            </Text>
+            <Text style={styles.chatTime}>
+              {item.lastMessageTime
+                ? new Date(item.lastMessageTime.toDate()).toLocaleTimeString(
+                    [],
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )
+                : ""}
+            </Text>
+          </View>
+          <View style={styles.chatMessage}>
+            <Text style={styles.chatText} numberOfLines={1}>
+              {item.lastMessage || ""}
+            </Text>
+            {myParticipantInfo.unread > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>
+                  {myParticipantInfo.unread}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.chatMessage}>
-          <Text style={styles.chatText} numberOfLines={1}>
-            {item.message}
-          </Text>
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>{item.unread}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.container}>
