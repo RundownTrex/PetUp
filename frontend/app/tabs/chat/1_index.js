@@ -84,7 +84,6 @@ export default function Chat() {
     console.log("Rendering item:", item);
     console.log("participantIds:", item.participantIds);
 
-    // Find the other participant by comparing with current user's ID
     const otherParticipantId = item.participantIds?.find(
       (id) => id !== currentUser.uid
     );
@@ -166,6 +165,9 @@ export default function Chat() {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <Text style={styles.emptyListText}>No recent messages</Text>
+        }
       />
     </View>
   );
@@ -238,5 +240,12 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 12,
     fontWeight: "bold",
+  },
+  emptyListText: {
+    color: colors.lightgray,
+    fontFamily: "AptosSemiBold",
+    fontSize: 16,
+    textAlign: "center",
+    alignSelf: "center",
   },
 });

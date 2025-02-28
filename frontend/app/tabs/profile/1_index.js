@@ -48,6 +48,15 @@ export default function ProfilePage() {
 
   const logout = async () => {
     try {
+      const currentUser = auth().currentUser;
+
+      if (currentUser) {
+        await firestore().collection("users").doc(currentUser.uid).update({
+          fcmToken: null,
+        });
+        console.log("FCM token removed from Firestore");
+      }
+
       await auth().signOut();
       await AsyncStorage.removeItem("userData");
       router.replace("/landing");

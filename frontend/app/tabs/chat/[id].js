@@ -101,6 +101,30 @@ const ChatScreen = () => {
     return () => unsubscribe();
   }, [chatId]);
 
+  useEffect(() => {
+    if (!chatId || !user || !userData) return;
+
+    const markAsRead = async () => {
+      try {
+        await firestore()
+          .collection("recentChats")
+          .doc(chatId)
+          .set(
+            {
+              [`participants.${user.uid}`]: {
+                unread: 0,
+              },
+            },
+            { merge: true }
+          );
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+
+    markAsRead();
+  }, [chatId, user, userData]);
+
   const onSend = useCallback(
     (newMessages = []) => {
       if (!chatId || !user) {
@@ -200,6 +224,21 @@ const ChatScreen = () => {
     </Send>
   );
 
+  const renderAvatar = (props) => {
+    const { currentMessage } = props;
+
+    if (currentMessage.user._id === ownerId) {
+      return (
+        <Image
+          source={{ uri: ownerData.pfpUrl || "https://placehold.co/30/png" }}
+          style={{ width: 36, height: 36, borderRadius: 18 }}
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -222,12 +261,13 @@ const ChatScreen = () => {
         user={{ _id: user?.uid || 1, name: user?.displayName || "You" }}
         renderUsernameOnMessage={false}
         showUserAvatar={false}
-        renderAvatar={() => null}
+        showAvatarForEveryMessage={false}
+        renderAvatar={renderAvatar}
         renderBubble={renderBubble}
         renderInputToolbar={renderInputToolbar}
         renderComposer={renderComposer}
         renderSend={renderSend}
-        messagesContainerStyle={{ paddingHorizontal: 8 }} // Add consistent padding
+        keyboardShouldPersistTaps="handled"
       />
     </View>
   );

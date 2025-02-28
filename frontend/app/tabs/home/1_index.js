@@ -298,7 +298,7 @@ export default function HomePage() {
                 </Text>
                 <Pressable
                   style={styles.addListingsButton}
-                  onPress={() => router.push("/tabs/add-listing")}
+                  onPress={() => router.push("pets/newpets")}
                 >
                   <Text style={styles.addListingsButtonText}>Add Listing</Text>
                 </Pressable>
