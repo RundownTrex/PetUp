@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Text,
   View,
@@ -14,12 +14,14 @@ import {
 import { DefaultTheme, Searchbar, Chip } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import colors from "../../../utils/colors";
 import Slider from "@react-native-community/slider";
 import * as Location from "expo-location";
 import { getDistance } from "geolib";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
+
+import colors from "../../../utils/colors";
+import CustomHeader from "../../../components/CustomHeader";
 
 const customSearchTheme = {
   ...DefaultTheme,
@@ -30,7 +32,6 @@ const customSearchTheme = {
   },
 };
 
-// Helper function to classify age group
 function getAgeGroup(ageValue, ageUnit) {
   let ageInYears = 0;
   if (ageUnit.toLowerCase().includes("month")) {
@@ -61,6 +62,7 @@ export default function SearchPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [range, setRange] = useState(10);
+  const searchbarRef = useRef(null);
 
   const breedOptions = {
     Dog: ["Labrador", "Poodle", "Bulldog", "Beagle"],
@@ -125,6 +127,16 @@ export default function SearchPage() {
     console.log(pets);
   }, [pets]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchbarRef.current) {
+        searchbarRef.current.focus();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const filteredPets = pets.filter((pet) => {
     if (pet.ownerId === auth().currentUser.uid) return false;
     if (pet.adopted) return false;
@@ -186,8 +198,10 @@ export default function SearchPage() {
   };
 
   return (
-    <View style={styles.container}>
+    <>
+      <CustomHeader title="Search" />
       <FlatList
+        contentContainerStyle={styles.container}
         data={filteredPets}
         keyExtractor={(item) => item.id}
         refreshControl={
@@ -206,6 +220,7 @@ export default function SearchPage() {
                   fontFamily: "Aptos",
                 }}
                 theme={customSearchTheme}
+                ref={searchbarRef}
               />
               <Pressable style={styles.filterButton} onPress={toggleFilters}>
                 <Ionicons name="filter" size={24} color={colors.white} />
@@ -321,9 +336,9 @@ export default function SearchPage() {
                   </Text>
                   <Slider
                     style={{ width: "100%", height: 40 }}
-                    minimumValue={5} 
+                    minimumValue={5}
                     maximumValue={100}
-                    step={5} 
+                    step={5}
                     value={range}
                     onValueChange={setRange}
                     minimumTrackTintColor={colors.accent}
@@ -395,13 +410,13 @@ export default function SearchPage() {
           <Text style={styles.noResults}>No pets found.</Text>
         }
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 20,
     backgroundColor: colors.white,

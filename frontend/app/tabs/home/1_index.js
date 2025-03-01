@@ -17,7 +17,7 @@ import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Divider } from "react-native-paper";
+import { Divider, Searchbar } from "react-native-paper";
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
@@ -199,18 +199,8 @@ export default function HomePage() {
                   alignItems: "center",
                 }}
               >
-                <Image
-                  source={require("../../../assets/AppIcons/Logo.png")}
-                  style={styles.logo}
-                />
-                <Text
-                  style={{
-                    fontFamily: "UbuntuBold",
-                    fontSize: 22,
-                    marginLeft: -10,
-                  }}
-                >
-                  PetUp
+                <Text style={styles.headerTitle}>
+                  {`${getGreeting()}, ${firstName ? firstName : ""}`}
                 </Text>
               </View>
               <Pressable onPress={showNotifications}>
@@ -230,24 +220,34 @@ export default function HomePage() {
           showsVerticalScrollIndicator={false}
           style={{ paddingTop: 70 }}
         >
-          <Text style={styles.headerTitle}>
-            {`${getGreeting()}, ${firstName ? firstName : ""}`}
-          </Text>
-          <Text
-            style={{
+          <Searchbar
+            placeholder="Search"
+            style={[
+              styles.searchbar,
+              {
+                backgroundColor: colors.offwhite,
+                height: 50,
+                margin: 5,
+                justifyContent: "center",
+              },
+            ]}
+            inputStyle={{
+              color: colors.blacktext,
               fontFamily: "Aptos",
-              fontSize: 16,
+              fontSize: 14,
+              height: 28,
+              alignSelf: "center",
             }}
-          >
-            Find your perfect pet companion or help a pet find a new loving
-            home!
-          </Text>
+            iconColor={colors.gray}
+            placeholderTextColor={colors.gray}
+            onPress={() => router.push("/tabs/home/4_search")}
+          />
 
           <View style={styles.quickActionsContainer}>
             <View style={{ flexDirection: "column" }}>
               <Pressable
                 style={styles.quickActionButton}
-                onPress={() => router.replace("/tabs/search")}
+                onPress={() => router.replace("/tabs/home/4_search")}
               >
                 <Image
                   source={require("../../../assets/kitten.png")}
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "black",
     fontSize: 18,
-    flex: 1,
+    // flex: 1,
     fontFamily: "AptosBold",
   },
   headerIcons: {
@@ -731,5 +731,10 @@ const styles = StyleSheet.create({
   notificationBody: {
     fontFamily: "Aptos",
     fontSize: 15,
+  },
+  searchbar: {
+    flex: 1,
+    borderRadius: 16,
+    height: 50,
   },
 });

@@ -8,7 +8,7 @@ import colors from "../utils/colors";
 
 const TABS = [
   { name: "home/1_index", icon: "home" },
-  { name: "search/1_index", icon: "search" },
+  { name: "shop/1_index", icon: "storefront" },
   { name: "chat/1_index", icon: "chatbubbles" },
   { name: "profile/1_index", icon: "person" },
 ];
@@ -35,7 +35,7 @@ export default function CustomTabBar(props) {
   // Hide tab bar if inside a stack screen
   const hideTabBar = ![
     "/tabs/home/1_index",
-    "/tabs/search/1_index",
+    "/tabs/shop/1_index",
     "/tabs/chat/1_index",
     "/tabs/profile/1_index",
   ].includes(pathname);
