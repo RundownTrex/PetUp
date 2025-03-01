@@ -83,6 +83,35 @@ app.post("/uploadPetImage", upload.single("file"), async (req, res) => {
   }
 });
 
+app.post("/uploadProductImage", upload.single("file"), async (req, res) => {
+  try {
+    const uid = req.body.uid;
+    if (!uid) {
+      throw new Error("UID is required");
+    }
+    const fileBuffer = req.file.buffer;
+    const base64File = fileBuffer.toString("base64");
+
+    const folderPath = `products/${uid}`;
+
+    const randomFileName = `${uid}-${Date.now()}.jpg`;
+
+    const uploadResponse = await imagekit.upload({
+      file: base64File,
+      fileName: randomFileName,
+      folder: folderPath,
+      useUniqueFileName: false,
+      overwriteFile: false,
+      filePath: `${folderPath}/${randomFileName}`,
+    });
+
+    return res.json(uploadResponse);
+  } catch (error) {
+    console.error("Upload failed:", error);
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
 app.get("/auth", (req, res) => {
   const authParameters = imagekit.getAuthenticationParameters();
   res.json(authParameters);

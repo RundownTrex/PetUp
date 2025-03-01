@@ -247,7 +247,7 @@ export default function HomePage() {
             <View style={{ flexDirection: "column" }}>
               <Pressable
                 style={styles.quickActionButton}
-                onPress={() => router.replace("/tabs/home/4_search")}
+                onPress={() => router.push("/tabs/home/4_search")}
               >
                 <Image
                   source={require("../../../assets/kitten.png")}
