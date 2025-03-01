@@ -173,6 +173,34 @@ const ChatScreen = () => {
               },
               { merge: true }
             );
+
+          const sendNotification = async () => {
+            try {
+              const response = await fetch(
+                "http://192.168.221.151:3000/sendNotification",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    userId: ownerId,
+                    title: `${userData.firstname} ${userData.lastname}`,
+                    body: newMessages[0].text,
+                    chatId: chatId,
+                    pfp: userData.pfpUrl,
+                  }),
+                }
+              );
+
+              const result = await response.json();
+              console.log("Notification sent:", result);
+            } catch (error) {
+              console.error("Error sending notification:", error);
+            }
+          };
+
+          sendNotification();
         } catch (error) {
           console.error("Error sending message:", error);
         }

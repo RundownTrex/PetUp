@@ -250,6 +250,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 20,
     paddingHorizontal: 16,
+    backgroundColor: colors.white,
   },
   title: {
     fontSize: 24,
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   signintext: {
     color: colors.black,
     textAlign: "center",
-    fontFamily: "UbuntuMediumItalic",
+    fontFamily: "AptosSemiBold",
   },
 
   signinbutton: {

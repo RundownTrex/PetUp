@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Button, Divider } from "react-native-paper";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import * as ImagePicker from "expo-image-picker";
 
 import CustomInput from "../../components/CustomInput";
 import MainButton from "../../components/MainButton";
@@ -24,6 +25,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [cpassword, setcPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,6 +42,64 @@ export default function SignUpPage() {
       };
     }
   }, []);
+
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Toast.show({
+        type: "error",
+        text1: "Permission required",
+        text2: "You need to allow access to your photos",
+      });
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setProfileImage(result.assets[0]);
+    }
+  };
+
+  const uploadProfileImage = async (uid) => {
+    if (!profileImage) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", {
+        uri: profileImage.uri,
+        type: "image/jpeg",
+        name: "profile.jpg",
+      });
+      formData.append("uid", uid);
+
+      const response = await fetch("http://192.168.221.151:3000/uploadPfp", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        return data.url;
+      } else {
+        throw new Error("No URL returned from upload");
+      }
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      return null;
+    }
+  };
 
   const signUpWEmailnPass = async () => {
     setLoading(true);
@@ -80,12 +140,17 @@ export default function SignUpPage() {
       const user = userCredential.user;
       await user.sendEmailVerification();
 
-      await firestore().collection("users").doc(user.uid).set({
-        email: user.email,
-        firstname: firstname.trim(),
-        lastname: lastname.trim(),
-        pfpUrl: "",
-      });
+      const profilePictureUrl = await uploadProfileImage(user.uid);
+
+      await firestore()
+        .collection("users")
+        .doc(user.uid)
+        .set({
+          email: user.email,
+          firstname: firstname.trim(),
+          lastname: lastname.trim(),
+          pfpUrl: profilePictureUrl || "",
+        });
 
       await AsyncStorage.setItem(
         "userData",
@@ -191,6 +256,25 @@ export default function SignUpPage() {
       <KeyboardAwareScrollView>
         <View style={styles.inputContainer}>
           <Text style={styles.title}>Sign Up</Text>
+
+          <Pressable style={styles.profileImageContainer} onPress={pickImage}>
+            {profileImage ? (
+              <Image
+                source={{ uri: profileImage.uri }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <View style={styles.profilePlaceholder}>
+                <MaterialIcons
+                  name="add-a-photo"
+                  size={32}
+                  color={colors.lightgray}
+                />
+              </View>
+            )}
+          </Pressable>
+          <Text style={styles.addPhotoText}>Add profile photo</Text>
+
           <CustomInput
             label="Email"
             value={email}
@@ -271,6 +355,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 20,
     paddingHorizontal: 16,
+    backgroundColor: colors.white,
   },
   inputContainer: {
     alignItems: "center",
@@ -280,13 +365,40 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontFamily: "AptosDisplayBold",
   },
-  button: { borderRadius: 80 },
+  profileImageContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 50,
+    marginBottom: 10,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.lightgray,
+  },
+  profileImage: {
+    width: "100%",
+    height: "100%",
+  },
+  profilePlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: colors.offwhite,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addPhotoText: {
+    fontFamily: "Aptos",
+    fontSize: 14,
+    color: colors.darkgray,
+    marginBottom: 20,
+  },
+  button: {
+    borderRadius: 80,
+  },
   signintext: {
     color: colors.black,
     textAlign: "center",
-    fontFamily: "UbuntuMediumItalic",
+    fontFamily: "AptosSemiBold",
   },
-
   signinbutton: {
     paddingVertical: 5,
   },

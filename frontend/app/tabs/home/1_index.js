@@ -22,12 +22,31 @@ import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
+import { formatDistanceToNow, parseISO } from "date-fns";
 
 import MainButton from "../../../components/MainButton";
 import CustomDivider from "../../../components/CustomDivider";
 import { useBottomSheet } from "../../../contexts/BottomSheetContext";
 import FeaturedPetsCarousel from "../../../components/FeaturedPetsCarousel";
 import colors from "../../../utils/colors";
+
+const formatRelativeTime = (timestamp) => {
+  const distance = formatDistanceToNow(parseISO(timestamp), {
+    includeSeconds: true,
+  });
+
+  if (distance.includes("less than")) return "just now";
+
+  return distance
+    .replace("about ", "")
+    .replace(" minutes", "m")
+    .replace(" minute", "m")
+    .replace(" hours", "h")
+    .replace(" hour", "h")
+    .replace(" days", "d")
+    .replace(" day", "d")
+    .replace(" ago", "");
+};
 
 export default function HomePage() {
   const router = useRouter();
@@ -39,11 +58,7 @@ export default function HomePage() {
   const { setIsBottomSheetOpen } = useBottomSheet();
   const snapPoints = useMemo(() => ["95%"], []);
 
-  const [notifications, setNotifications] = useState([
-    { id: "1", text: "New pet posting available" },
-    { id: "2", text: "Your listing has been viewed" },
-    { id: "3", text: "Reminder: Update your profile" },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
@@ -90,6 +105,34 @@ export default function HomePage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribeNotifications = firestore()
+      .collection("users")
+      .doc(user.uid)
+      .onSnapshot(
+        (doc) => {
+          if (doc.exists) {
+            const userData = doc.data();
+            if (
+              userData.recentNotifications &&
+              Array.isArray(userData.recentNotifications)
+            ) {
+              setNotifications(userData.recentNotifications);
+            } else {
+              setNotifications([]);
+            }
+          }
+        },
+        (error) => {
+          console.error("Error fetching notifications:", error);
+        }
+      );
+
+    return () => unsubscribeNotifications();
+  }, [user]);
+
   const showNotifications = useCallback(() => {
     setIsBottomSheetOpen(true);
     bottomSheetRef.current?.snapToIndex(1);
@@ -100,9 +143,19 @@ export default function HomePage() {
     bottomSheetRef.current?.close();
   }, []);
 
-  const clearNotifications = useCallback(() => {
-    setNotifications([]);
-  }, []);
+  const clearNotifications = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      await firestore().collection("users").doc(user.uid).update({
+        recentNotifications: [],
+      });
+
+      console.log("Notifications cleared from Firestore");
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+    }
+  }, [user]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -171,7 +224,6 @@ export default function HomePage() {
           </View>
         </Animated.View>
 
-        {/* Scrollable Content */}
         <Animated.ScrollView
           onScroll={scrollHandler}
           scrollEventThrottle={16}
@@ -366,11 +418,9 @@ export default function HomePage() {
                 marginBottom: 16,
               }}
             >
-              {/* Button to clear notifications */}
               <Pressable onPress={clearNotifications} style={{ padding: 8 }}>
                 <Ionicons name="trash-bin" size={24} color="red" />
               </Pressable>
-              {/* Button to close the bottom sheet */}
               <Pressable onPress={closeNotifications} style={{ padding: 8 }}>
                 <Ionicons name="close" size={24} color="black" />
               </Pressable>
@@ -382,7 +432,7 @@ export default function HomePage() {
                 marginBottom: 10,
               }}
             >
-              Notifications
+              Recent Notifications
             </Text>
             {notifications.length > 0 ? (
               <ScrollView>
@@ -395,11 +445,50 @@ export default function HomePage() {
                       borderColor: colors.lightgray,
                       borderRadius: 8,
                       marginBottom: 10,
+                      flexDirection: "row",
+                      alignItems: "center",
                     }}
                   >
-                    <Text style={{ fontFamily: "Aptos", fontSize: 16 }}>
-                      {notification.text}
-                    </Text>
+                    <Image
+                      source={{ uri: notification.pfp }}
+                      style={styles.pfp}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.notificationTitle,
+                            {
+                              flex: 1,
+                              marginRight: 8,
+                            },
+                          ]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {notification.title}
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: "Aptos",
+                            fontSize: 12,
+                            color: colors.darkgray,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {formatRelativeTime(notification.timestamp)}
+                        </Text>
+                      </View>
+                      <Text style={styles.notificationBody}>
+                        {notification.body}
+                      </Text>
+                    </View>
                   </View>
                 ))}
               </ScrollView>
@@ -628,5 +717,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 16,
+  },
+  pfp: {
+    width: 38,
+    height: 38,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  notificationTitle: {
+    fontFamily: "AptosBold",
+    fontSize: 16,
+  },
+  notificationBody: {
+    fontFamily: "Aptos",
+    fontSize: 15,
   },
 });
