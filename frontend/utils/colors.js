@@ -22,6 +22,8 @@ const colors = {
   alert: "#f7c631",
   completed: "#15bd02",
   red: "#E4080A",
+  green: "#4CAF50",
+  orange: "#FF9800",
 };
 
 export default colors;

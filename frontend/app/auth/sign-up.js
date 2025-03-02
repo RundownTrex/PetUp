@@ -80,7 +80,7 @@ export default function SignUpPage() {
       });
       formData.append("uid", uid);
 
-      const response = await fetch("http://192.168.221.151:3000/uploadPfp", {
+      const response = await fetch("https://petup.onrender.com/uploadPfp", {
         method: "POST",
         body: formData,
         headers: {

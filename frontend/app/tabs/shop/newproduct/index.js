@@ -242,7 +242,7 @@ export default function NewAccessory() {
       formData.append("uid", auth().currentUser.uid);
 
       const response = await fetch(
-        "http://192.168.221.151:3000/uploadProductImage",
+        "https://petup.onrender.com/uploadProductImage",
         {
           method: "POST",
           body: formData,

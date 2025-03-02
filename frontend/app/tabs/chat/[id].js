@@ -177,7 +177,7 @@ const ChatScreen = () => {
           const sendNotification = async () => {
             try {
               const response = await fetch(
-                "http://192.168.221.151:3000/sendNotification",
+                "https://petup.onrender.com/sendNotification",
                 {
                   method: "POST",
                   headers: {

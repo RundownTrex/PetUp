@@ -87,7 +87,7 @@ const ProfileScreen = () => {
       formData.append("file", file);
       formData.append("uid", user.uid);
 
-      const response = await fetch("http://192.168.221.151:3000/uploadPfp", {
+      const response = await fetch("https://petup.onrender.com/uploadPfp", {
         method: "POST",
         body: formData,
         headers: {

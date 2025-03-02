@@ -144,8 +144,8 @@ export default function MyProducts() {
             style={styles.editButton}
             onPress={() =>
               router.push({
-                pathname: "/tabs/shop/edit",
-                params: { productId: item.id },
+                pathname: "/tabs/shop/editproduct/",
+                params: { product: JSON.stringify(item) },
               })
             }
           >
@@ -217,11 +217,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 8,
     padding: 15,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
     borderWidth: 1,
     borderColor: colors.offwhite,
   },

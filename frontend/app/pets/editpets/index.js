@@ -161,7 +161,7 @@ export default function EditPet() {
       formData.append("uid", auth().currentUser.uid);
 
       const response = await fetch(
-        "http://192.168.221.151:3000/uploadPetImage",
+        "https://petup.onrender.com/uploadPetImage",
         {
           method: "POST",
           body: formData,
