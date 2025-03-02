@@ -200,7 +200,7 @@ export default function HomePage() {
                 }}
               >
                 <Text style={styles.headerTitle}>
-                  {`${getGreeting()}, ${firstName ? firstName : ""}`}
+                  {`${getGreeting()} ${firstName ? firstName : ""}`}
                 </Text>
               </View>
               <Pressable onPress={showNotifications}>

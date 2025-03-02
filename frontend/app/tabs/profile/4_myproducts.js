@@ -27,7 +27,7 @@ export default function MyProducts() {
     try {
       const uid = auth().currentUser.uid;
       const snapshot = await firestore()
-        .collection("products")
+        .collection("petProducts")
         .where("sellerId", "==", uid)
         .get();
 
@@ -48,7 +48,7 @@ export default function MyProducts() {
     const uid = auth().currentUser.uid;
 
     const unsubscribe = firestore()
-      .collection("products")
+      .collection("petProducts")
       .where("sellerId", "==", uid)
       .onSnapshot(
         (snapshot) => {
@@ -77,7 +77,7 @@ export default function MyProducts() {
 
   const handleStatusChange = async (productId, status) => {
     try {
-      await firestore().collection("products").doc(productId).update({
+      await firestore().collection("petProducts").doc(productId).update({
         status: status,
       });
     } catch (error) {

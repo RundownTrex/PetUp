@@ -1,21 +1,40 @@
 # PetUp
 
-## Pet Rehoming & Adoption Application
+## Pet Rehoming & Adoption Application with Pet Products Marketplace
 
-PetUp is a comprehensive mobile application designed to connect pet owners who need to rehome their pets with potential adopters. The platform provides a humane alternative to shelters, allowing pets to transition directly from one loving home to another.
+PetUp is a comprehensive mobile application designed to connect pet owners who need to rehome their pets with potential adopters. The platform provides a humane alternative to shelters, allowing pets to transition directly from one loving home to another. Additionally, PetUp features a peer-to-peer marketplace for pet-related products and accessories.
 
 ![PetUp Logo](/frontend/assets/AppIcons/Logo.png)
 
 ## Features
 
-- **Profile Management**: Create and manage user profiles with verification
-- **Pet Listings**: Add detailed pet profiles with multiple images, descriptions, and care requirements
-- **Advanced Search**: Find pets based on location, species, breed, age, and other attributes
-- **In-app Messaging**: Communicate directly with pet owners or potential adopters
-- **Favorites System**: Save pets you're interested in adopting
-- **Real-time Notifications**: Get alerts for messages and application updates
-- **Pet Care Resources**: Access training videos and care tips for different pet species
-- **Distance Calculation**: See pets available near your location
+- **Pet Rehoming**:
+
+  - **Profile Management**: Create and manage user profiles
+  - **Pet Listings**: Add detailed pet profiles with multiple images, descriptions, and care requirements
+  - **Advanced Search**: Find pets based on location, species, breed, age, and other attributes
+  - **Application Process**: Structured workflow for adoption applications
+  - **Favorites System**: Save pets you're interested in adopting
+
+- **Communication**:
+
+  - **In-app Messaging**: Communicate directly with pet owners or potential adopters
+  - **Real-time Notifications**: Get alerts for messages and application updates
+
+- **Location Features**:
+
+  - **Distance Calculation**: See pets and products available near your location
+  - **Map Integration**: Get directions to pet owners or product sellers
+
+- **Pet Products Marketplace**:
+
+  - **Product Listings**: List pet accessories, food, toys, and other items for sale
+  - **Category Filtering**: Browse products by pet type, category, and price range
+  - **Price Sorting**: Sort items by price (low to high, high to low)
+  - **Used Item Sales**: List and buy second-hand pet equipment
+
+- **Knowledge Base**:
+  - **Pet Care Resources**: Access training videos and care tips for different pet species
 
 ## Screenshots
 
@@ -109,9 +128,6 @@ PetUp/
 │   └── utils/              # Helper functions and utilities
 │
 ├── backend/                # Node.js server
-│   ├── routes/             # API endpoints
-│   ├── middleware/         # Custom middleware
-│   ├── services/           # Business logic
 │   └── server.js           # Server entry point
 │
 └── README.md               # This file
@@ -119,8 +135,8 @@ PetUp/
 
 ## Running the App
 
-- **Android Simulator**: Use Expo CLI commands or buttons in the Expo Developer Tools
-- **Physical Device**: Scan the QR code with the Expo Go app
+- **Android Emulator**: Use Expo CLI commands or buttons in the Expo Developer Tools
+- **Physical Device**: Connect the device via adb and execute the `npx expo run` command
 - **Backend**: The server needs to be running for full functionality
 
 ## Contributing
@@ -137,6 +153,6 @@ This project is licensed under the MIT License.
 
 ## Contact
 
-Your Name - [aditya.goriwale@gmail.com](mailto:your.email@example.com)
+Aditya Goriwale - [aditya.goriwale@gmail.com](mailto:aditya.goriwale@gmail.com)
 
-Project Link: [https://github.com/RundownTrex/PetUp](https://github.com/yourusername/PetUp)
+Project Link: [https://github.com/RundownTrex/PetUp](https://github.com/RundownTrex/PetUp)

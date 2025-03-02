@@ -9,7 +9,7 @@ import {
   Modal,
   Pressable,
   Alert,
-  TouchableOpacity,
+  Linking,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import {
@@ -25,6 +25,8 @@ import Animated, {
 } from "react-native-reanimated";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
 
 import colors from "../../../utils/colors";
 import MainButton from "../../../components/MainButton";
@@ -43,6 +45,9 @@ const ProductDetailsScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [distance, setDistance] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const scale = useSharedValue(1);
   const animatedFavoriteStyle = useAnimatedStyle(() => ({
@@ -53,7 +58,7 @@ const ProductDetailsScreen = () => {
     const fetchProduct = async () => {
       try {
         const productDoc = await firestore()
-          .collection("products")
+          .collection("petProducts")
           .doc(id)
           .get();
 
@@ -61,7 +66,6 @@ const ProductDetailsScreen = () => {
           const productData = { id: productDoc.id, ...productDoc.data() };
           setProduct(productData);
 
-          // Fetch seller information if sellerId exists
           if (productData.sellerId) {
             const sellerDoc = await firestore()
               .collection("users")
@@ -72,45 +76,6 @@ const ProductDetailsScreen = () => {
               setSeller({ id: sellerDoc.id, ...sellerDoc.data() });
             }
           }
-        } else {
-          const mockProduct = {
-            id: id,
-            name: "Premium Dog Food",
-            description: "High-quality nutrition for your dog",
-            price: 899.99,
-            category: "Food",
-            petType: "Dog",
-            brand: "Royal Canin",
-            condition: "New",
-            listedDate: new Date().toISOString(),
-            sellerId: "user123",
-            location: "Mumbai, Maharashtra",
-            details:
-              "Made with real chicken as the #1 ingredient. Contains essential nutrients and vitamins for a healthy and active lifestyle.",
-            usage:
-              "For adult dogs. Feed according to weight - see feeding chart on packaging.",
-            features: [
-              "High protein content",
-              "No artificial preservatives",
-              "Balanced nutrition",
-              "Supports immune system",
-            ],
-            specifications: "Protein: 26%, Fat: 15%, Fiber: 3%, Moisture: 10%",
-            images: [
-              "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-              "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-              "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-            ],
-          };
-          setProduct(mockProduct);
-
-          setSeller({
-            id: "user123",
-            displayName: "Rahul Sharma",
-            photoURL: "https://randomuser.me/api/portraits/men/32.jpg",
-            location: "Mumbai, Maharashtra",
-            totalSales: 24,
-          });
         }
         setLoading(false);
       } catch (error) {
@@ -151,6 +116,73 @@ const ProductDetailsScreen = () => {
     }
   }, [product?.id]);
 
+  useEffect(() => {
+    const getUserLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.log("Location permission denied");
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      } catch (error) {
+        console.error("Error getting user location:", error);
+      }
+    };
+
+    getUserLocation();
+  }, []);
+
+  useEffect(() => {
+    if (userLocation && product && typeof product.location === "object") {
+      const dist = calculateDistance(userLocation, product.location);
+      setDistance(dist);
+    }
+  }, [userLocation, product]);
+
+  const calculateDistance = (userLoc, productLoc) => {
+    if (!userLoc || !productLoc || !userLoc.latitude || !productLoc.latitude) {
+      return null;
+    }
+
+    try {
+      const distanceInMeters = getDistance(
+        {
+          latitude: userLoc.latitude,
+          longitude: userLoc.longitude,
+        },
+        {
+          latitude: productLoc.latitude,
+          longitude: productLoc.longitude,
+        }
+      );
+      return distanceInMeters / 1000;
+    } catch (error) {
+      console.error("Error calculating distance:", error);
+      return null;
+    }
+  };
+
+  const deg2rad = (deg) => {
+    return deg * (Math.PI / 180);
+  };
+
+  const formatDistance = (distance) => {
+    if (distance === null || distance === undefined) {
+      return null;
+    }
+    if (distance >= 1) {
+      return `${distance.toFixed(1)} km away`;
+    } else {
+      return `${(distance * 1000).toFixed(0)} m away`;
+    }
+  };
+
   const toggleFavorite = async () => {
     const newFavoriteStatus = !isFavorite;
     setIsFavorite(newFavoriteStatus);
@@ -184,10 +216,9 @@ const ProductDetailsScreen = () => {
   };
 
   const contactSeller = () => {
-    // In a real app, this would open a chat with the seller
     Alert.alert(
       "Contact Seller",
-      `Would you like to message ${seller?.displayName || "the seller"}?`,
+      `Would you like to message ${seller.firstname} ${seller.lastname}?`,
       [
         {
           text: "Cancel",
@@ -195,37 +226,82 @@ const ProductDetailsScreen = () => {
         },
         {
           text: "Message",
-          onPress: () => router.push(`/messages/${seller?.id}`),
+          onPress: () => {
+            console.log("Seller ID: ", product.sellerId);
+            router.push({
+              pathname: `/tabs/chat/${product.sellerId}`,
+              params: { ownerId: product.sellerId },
+            });
+          },
         },
       ]
     );
   };
 
-  const viewSellerProfile = () => {
-    if (seller?.id) {
-      router.push(`/profile/${seller.id}`);
+  const reportListing = () => {
+    setShowReportModal(true);
+  };
+
+  const submitReport = async (reason) => {
+    setShowReportModal(false);
+
+    try {
+      const userId = auth().currentUser?.uid;
+
+      if (!userId) {
+        Alert.alert("Error", "You must be logged in to report a listing.");
+        return;
+      }
+
+      await firestore()
+        .collection("reports")
+        .add({
+          itemId: product.id,
+          itemType: "product",
+          sellerId: product.sellerId,
+          reporterId: userId,
+          reason: reason,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          status: "pending",
+          productName: product.name,
+          productImage: product.images?.[0] || null,
+        });
+
+      Alert.alert(
+        "Thank you",
+        "Your report has been submitted and will be reviewed by our team.",
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      Alert.alert(
+        "Error",
+        "Failed to submit your report. Please try again later.",
+        [{ text: "OK" }]
+      );
     }
   };
 
-  const reportListing = () => {
-    Alert.alert("Report Listing", "Why are you reporting this listing?", [
-      {
-        text: "Prohibited item",
-        onPress: () =>
-          Alert.alert("Thank you", "Your report has been submitted"),
-      },
-      {
-        text: "Inaccurate description",
-        onPress: () =>
-          Alert.alert("Thank you", "Your report has been submitted"),
-      },
-      {
-        text: "Suspected fraud",
-        onPress: () =>
-          Alert.alert("Thank you", "Your report has been submitted"),
-      },
-      { text: "Cancel", style: "cancel" },
-    ]);
+  const openMapDirections = () => {
+    if (
+      !userLocation ||
+      !product.location ||
+      typeof product.location !== "object"
+    ) {
+      Alert.alert(
+        "Cannot Open Directions",
+        "Either your location or the seller's location is not available.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${product.location.latitude},${product.location.longitude}`;
+
+    Linking.openURL(url).catch((error) => {
+      console.error("Error opening maps:", error);
+      Alert.alert("Error", "Could not open the map application.");
+    });
   };
 
   if (loading || !product) {
@@ -267,7 +343,19 @@ const ProductDetailsScreen = () => {
                   setShowModal(true);
                 }}
               >
-                <Image source={{ uri: item }} style={styles.productImage} />
+                <View style={styles.imageWrapper}>
+                  <Image source={{ uri: item }} style={styles.productImage} />
+                  {product.status === "sold" && (
+                    <View style={styles.soldOverlay}>
+                      <Text style={styles.statusOverlayText}>SOLD</Text>
+                    </View>
+                  )}
+                  {product.status === "reserved" && (
+                    <View style={styles.reservedOverlay}>
+                      <Text style={styles.statusOverlayText}>RESERVED</Text>
+                    </View>
+                  )}
+                </View>
               </Pressable>
             )}
           />
@@ -326,17 +414,14 @@ const ProductDetailsScreen = () => {
             <Text style={styles.listedDate}>
               Listed {formatDate(product.listedDate)}
             </Text>
-            <TouchableOpacity
-              style={styles.reportButton}
-              onPress={reportListing}
-            >
+            <Pressable style={styles.reportButton} onPress={reportListing}>
               <MaterialCommunityIcons
                 name="flag-outline"
                 size={18}
                 color={colors.darkgray}
               />
               <Text style={styles.reportText}>Report</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <Text style={styles.productName}>{product.name}</Text>
@@ -348,26 +433,44 @@ const ProductDetailsScreen = () => {
               size={18}
               color={colors.darkgray}
             />
-            <Text style={styles.locationText}>
-              {product.location || "Location not specified"}
-            </Text>
+            <View style={styles.locationTextContainer}>
+              <Text style={styles.locationText}>
+                {typeof product.location === "object"
+                  ? product.address?.city ||
+                    `${product.location.latitude.toFixed(
+                      2
+                    )}, ${product.location.longitude.toFixed(2)}`
+                  : product.location || "Location not specified"}
+              </Text>
+              {distance !== null && (
+                <Text style={styles.distanceText}>
+                  {" "}
+                  • {formatDistance(distance)}
+                </Text>
+              )}
+            </View>
           </View>
 
-          {/* Seller Information */}
           {seller && (
-            <View style={styles.sellerContainer}>
+            <Pressable
+              style={styles.sellerContainer}
+              onPress={openMapDirections}
+              activeOpacity={0.7}
+            >
               <View style={styles.sellerHeader}>
                 <Text style={styles.sectionTitle}>Seller Information</Text>
               </View>
               <View style={styles.sellerInfo}>
                 <Image
                   source={{
-                    uri: seller.photoURL || "https://via.placeholder.com/100",
+                    uri: seller.pfpUrl || "https://placehold.co/100/jpg",
                   }}
                   style={styles.sellerImage}
                 />
                 <View style={styles.sellerDetails}>
-                  <Text style={styles.sellerName}>{seller.displayName}</Text>
+                  <Text style={styles.sellerName}>
+                    {seller.firstname} {seller.lastname}
+                  </Text>
 
                   <View style={styles.salesRow}>
                     <Text style={styles.salesText}>
@@ -376,8 +479,11 @@ const ProductDetailsScreen = () => {
                     </Text>
                   </View>
                 </View>
+                <View style={styles.directionsContainer}>
+                  <Ionicons name="navigate" size={24} color={colors.black} />
+                </View>
               </View>
-            </View>
+            </Pressable>
           )}
 
           <View style={styles.detailRow}>
@@ -416,19 +522,10 @@ const ProductDetailsScreen = () => {
             </View>
           )}
 
-          {product.features && product.features.length > 0 && (
+          {product.features && (
             <View style={styles.descriptionContainer}>
               <Text style={styles.sectionTitle}>Key Features</Text>
-              {product.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={16}
-                    color={colors.accent}
-                  />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
+              <Text style={styles.featureText}>{product.features}</Text>
             </View>
           )}
 
@@ -445,19 +542,60 @@ const ProductDetailsScreen = () => {
         <View style={styles.buttonContainer}>
           <MainButton
             title="Contact Seller"
-            icon={
-              <Ionicons
-                name="chatbubble-outline"
-                size={18}
-                color="white"
-                style={{ marginRight: 10 }}
-              />
-            }
+            icon={<Ionicons name="chatbubble" size={18} color="white" />}
             onPress={contactSeller}
             style={{ backgroundColor: colors.accent }}
           />
         </View>
       </ScrollView>
+      <Modal
+        visible={showReportModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowReportModal(false)}
+        >
+          <View style={styles.reportModalContent}>
+            <Text style={styles.reportModalTitle}>Report Listing</Text>
+            <Text style={styles.reportModalSubtitle}>
+              Why are you reporting this listing?
+            </Text>
+
+            <Pressable
+              style={styles.reportOption}
+              onPress={() => submitReport("Prohibited item")}
+            >
+              <Text style={styles.reportOptionText}>Prohibited item</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.reportOption}
+              onPress={() => submitReport("Inaccurate description")}
+            >
+              <Text style={styles.reportOptionText}>
+                Inaccurate description
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.reportOption}
+              onPress={() => submitReport("Suspected fraud")}
+            >
+              <Text style={styles.reportOptionText}>Suspected fraud</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.reportOption, styles.cancelOption]}
+              onPress={() => setShowReportModal(false)}
+            >
+              <Text style={styles.cancelOptionText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </>
   );
 };
@@ -528,9 +666,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
   },
-  locationText: {
+  locationTextContainer: {
     marginLeft: 5,
+    flexDirection: "row",
+  },
+  locationText: {
     fontSize: 15,
+    color: colors.darkgray,
+    fontFamily: "Aptos",
+  },
+  distanceText: {
+    fontSize: 14,
     color: colors.darkgray,
     fontFamily: "Aptos",
   },
@@ -562,12 +708,6 @@ const styles = StyleSheet.create({
   sellerName: {
     fontSize: 16,
     fontFamily: "AptosSemiBold",
-    marginBottom: 2,
-  },
-  sellerSince: {
-    fontSize: 14,
-    color: colors.darkgray,
-    fontFamily: "Aptos",
     marginBottom: 2,
   },
   salesRow: {
@@ -623,13 +763,7 @@ const styles = StyleSheet.create({
     color: "gray",
     fontFamily: "Aptos",
   },
-  featureItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 4,
-  },
   featureText: {
-    marginLeft: 8,
     fontSize: 14,
     color: "gray",
     fontFamily: "Aptos",
@@ -667,6 +801,88 @@ const styles = StyleSheet.create({
   },
   activeThumbnail: {
     borderColor: colors.accent,
+  },
+  directionsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  directionsText: {
+    fontSize: 14,
+    color: colors.accent,
+    fontFamily: "Aptos",
+    marginLeft: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reportModalContent: {
+    width: "80%",
+    backgroundColor: colors.white,
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  reportModalTitle: {
+    fontSize: 18,
+    fontFamily: "AptosBold",
+    marginBottom: 10,
+  },
+  reportModalSubtitle: {
+    fontSize: 14,
+    fontFamily: "Aptos",
+    color: colors.darkgray,
+    marginBottom: 20,
+  },
+  reportOption: {
+    width: "100%",
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.offwhite,
+    alignItems: "center",
+  },
+  reportOptionText: {
+    fontSize: 16,
+    fontFamily: "Aptos",
+  },
+  cancelOption: {
+    borderBottomWidth: 0,
+  },
+  cancelOptionText: {
+    fontSize: 16,
+    fontFamily: "Aptos",
+    color: colors.accent,
+  },
+  imageWrapper: {
+    position: "relative",
+  },
+  soldOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reservedOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 165, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  statusOverlayText: {
+    color: colors.white,
+    fontSize: 24,
+    fontFamily: "AptosBold",
   },
 });
 

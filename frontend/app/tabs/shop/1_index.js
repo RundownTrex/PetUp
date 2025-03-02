@@ -10,14 +10,18 @@ import {
   Platform,
   UIManager,
   RefreshControl,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import { DefaultTheme, Searchbar, Chip } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
 
 import colors from "../../../utils/colors";
-import CustomHeader from "../../../components/CustomHeader";
 import { router } from "expo-router";
 
 const customSearchTheme = {
@@ -35,9 +39,13 @@ export default function ShopScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [category, setCategory] = useState("");
   const [petType, setPetType] = useState("");
-  const [priceRange, setPriceRange] = useState(100);
+  const [priceRange, setPriceRange] = useState(5000);
   const [brand, setBrand] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sortOption, setSortOption] = useState("newest");
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
   const searchbarRef = useRef(null);
 
   const categories = [
@@ -57,157 +65,140 @@ export default function ShopScreen() {
         UIManager.setLayoutAnimationEnabledExperimental(true);
     }
 
-    setProducts([
-      {
-        id: "1",
-        name: "Premium Dog Food",
-        description: "High-quality nutrition for your dog",
-        price: 24.99,
-        category: "Food",
-        petType: "Dog",
-        brand: "Royal Canin",
-        rating: 4.5,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "2",
-        name: "Deluxe Cat Food",
-        description: "Balanced nutrition for your cat",
-        price: 19.99,
-        category: "Food",
-        petType: "Cat",
-        brand: "Purina",
-        rating: 4.2,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "3",
-        name: "Bird Seed Mix",
-        description: "Nutritious blend for your birds",
-        price: 9.99,
-        category: "Food",
-        petType: "Bird",
-        brand: "PetsCo",
-        rating: 4.0,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "4",
-        name: "Chew Toy",
-        description: "Durable chew toy for dogs",
-        price: 14.99,
-        category: "Toys",
-        petType: "Dog",
-        brand: "Kong",
-        rating: 4.6,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "5",
-        name: "Catnip Toy",
-        description: "Fun toy infused with catnip",
-        price: 7.99,
-        category: "Toys",
-        petType: "Cat",
-        brand: "Friskies",
-        rating: 4.4,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "6",
-        name: "Premium Fish Food",
-        description: "High quality flakes for fish",
-        price: 12.99,
-        category: "Food",
-        petType: "Fish",
-        brand: "Royal Canin",
-        rating: 4.3,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "7",
-        name: "Reptile Heating Lamp",
-        description: "Essential heating for reptiles",
-        price: 29.99,
-        category: "Accessories",
-        petType: "Reptile",
-        brand: "PetsCo",
-        rating: 4.7,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "8",
-        name: "Small Pet Bedding",
-        description: "Comfortable bedding for small pets",
-        price: 15.99,
-        category: "Beds",
-        petType: "Small Pets",
-        brand: "Purina",
-        rating: 4.1,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "9",
-        name: "Grooming Kit",
-        description: "All-in-one grooming kit for pets",
-        price: 34.99,
-        category: "Grooming",
-        petType: "Dog",
-        brand: "Kong",
-        rating: 4.8,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "10",
-        name: "Medicine for Pets",
-        description: "Effective medicine for common pet ailments",
-        price: 29.99,
-        category: "Medicine",
-        petType: "Cat",
-        brand: "Royal Canin",
-        rating: 4.2,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-      {
-        id: "11",
-        name: "Treats Pack",
-        description: "Delicious treats for training and rewards",
-        price: 11.99,
-        category: "Treats",
-        petType: "Dog",
-        brand: "Friskies",
-        rating: 4.5,
-        image:
-          "https://m.media-amazon.com/images/I/41nXO0RsQdL._SX300_SY300_QL70_FMwebp_.jpg",
-      },
-    ]);
+    fetchProducts();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      }
+    })();
+  }, []);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const productsSnapshot = await firestore()
+        .collection("petProducts")
+        .orderBy("createdAt", "desc")
+        .get();
+
+      const productsList = productsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      console.log(productsList);
+
+      setProducts(productsList);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProducts();
+  };
 
   const toggleFilters = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setShowFilters(!showFilters);
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesQuery =
-      (product.name || "").toLowerCase().includes(query.toLowerCase()) ||
-      (product.description || "").toLowerCase().includes(query.toLowerCase());
-    const matchesCategory = category ? product.category === category : true;
-    const matchesPetType = petType ? product.petType === petType : true;
-    const matchesPrice = product.price <= priceRange;
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 9999;
 
-    return matchesQuery && matchesCategory && matchesPetType && matchesPrice;
-  });
+    try {
+      const distanceInMeters = getDistance(
+        { latitude: lat1, longitude: lon1 },
+        { latitude: lat2, longitude: lon2 }
+      );
+
+      return distanceInMeters / 1000;
+    } catch (error) {
+      console.error("Error calculating distance:", error);
+      return 9999;
+    }
+  };
+
+  const formatDistance = (distance) => {
+    if (distance === undefined || distance === null) {
+      return "Distance unknown";
+    }
+    if (distance >= 1) {
+      return `${distance.toFixed(1)} km away`;
+    } else {
+      return `${(distance * 1000).toFixed(0)} m away`;
+    }
+  };
+
+  const currentUserId = auth().currentUser?.uid || "";
+
+  const sortedAndFilteredProducts = React.useMemo(() => {
+    const filtered = products.filter((product) => {
+      if (product.sellerId === currentUserId) {
+        return false;
+      }
+
+      const matchesQuery =
+        (product.name || "").toLowerCase().includes(query.toLowerCase()) ||
+        (product.description || "").toLowerCase().includes(query.toLowerCase());
+      const matchesCategory = category ? product.category === category : true;
+      const matchesPetType = petType ? product.petType === petType : true;
+      const matchesPrice =
+        priceRange === 5000 ? true : product.price <= priceRange;
+
+      return matchesQuery && matchesCategory && matchesPetType && matchesPrice;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sortOption === "price_low_high") {
+        return a.price - b.price;
+      } else if (sortOption === "price_high_low") {
+        return b.price - a.price;
+      } else if (sortOption === "distance" && userLocation) {
+        const distanceA = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          a.location?.latitude,
+          a.location?.longitude
+        );
+        const distanceB = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          b.location?.latitude,
+          b.location?.longitude
+        );
+        return distanceA - distanceB;
+      } else {
+        return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+      }
+    });
+  }, [
+    products,
+    query,
+    category,
+    petType,
+    priceRange,
+    sortOption,
+    userLocation,
+    currentUserId,
+  ]);
+
+  const handleSortChange = (option) => {
+    setSortOption(option);
+    setShowSortModal(false);
+  };
 
   return (
     <>
@@ -227,6 +218,97 @@ export default function ShopScreen() {
           </Pressable>
         </View>
 
+        <View style={styles.sortContainer}>
+          <Text style={styles.sortLabel}>Sort by:</Text>
+          <Pressable
+            style={styles.sortButton}
+            onPress={() => setShowSortModal(true)}
+          >
+            <Text style={styles.sortButtonText}>
+              {sortOption === "newest" && "Newest"}
+              {sortOption === "price_low_high" && "Price: Low to High"}
+              {sortOption === "price_high_low" && "Price: High to Low"}
+              {sortOption === "distance" && "Distance"}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color={colors.black} />
+          </Pressable>
+        </View>
+
+        <Modal
+          transparent
+          visible={showSortModal}
+          animationType="fade"
+          onRequestClose={() => setShowSortModal(false)}
+        >
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setShowSortModal(false)}
+          >
+            <View style={styles.sortModalContent}>
+              <Pressable
+                style={[
+                  styles.sortOption,
+                  sortOption === "newest" && styles.selectedSort,
+                ]}
+                onPress={() => handleSortChange("newest")}
+              >
+                <Text style={styles.sortOptionText}>Newest</Text>
+                {sortOption === "newest" && (
+                  <Ionicons name="checkmark" size={18} color={colors.accent} />
+                )}
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.sortOption,
+                  sortOption === "price_low_high" && styles.selectedSort,
+                ]}
+                onPress={() => handleSortChange("price_low_high")}
+              >
+                <Text style={styles.sortOptionText}>Price: Low to High</Text>
+                {sortOption === "price_low_high" && (
+                  <Ionicons name="checkmark" size={18} color={colors.accent} />
+                )}
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.sortOption,
+                  sortOption === "price_high_low" && styles.selectedSort,
+                ]}
+                onPress={() => handleSortChange("price_high_low")}
+              >
+                <Text style={styles.sortOptionText}>Price: High to Low</Text>
+                {sortOption === "price_high_low" && (
+                  <Ionicons name="checkmark" size={18} color={colors.accent} />
+                )}
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.sortOption,
+                  sortOption === "distance" && styles.selectedSort,
+                  !userLocation && styles.disabledSort,
+                ]}
+                onPress={() => userLocation && handleSortChange("distance")}
+              >
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    !userLocation && { color: colors.darkgray },
+                  ]}
+                >
+                  Distance
+                  {!userLocation && " (Location access required)"}
+                </Text>
+                {sortOption === "distance" && (
+                  <Ionicons name="checkmark" size={18} color={colors.accent} />
+                )}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+
         {showFilters && (
           <View style={styles.filtersContainer}>
             <View style={styles.filterHeaderRow}>
@@ -240,7 +322,7 @@ export default function ShopScreen() {
                     setCategory("");
                     setPetType("");
                     setBrand("");
-                    setPriceRange(100);
+                    setPriceRange(500);
                   }}
                 >
                   <Text style={styles.clearButtonText}>Clear</Text>
@@ -264,6 +346,7 @@ export default function ShopScreen() {
                   textStyle={{
                     color: category === cat ? colors.white : colors.blacktext,
                   }}
+                  selectedColor={colors.white}
                 >
                   {cat}
                 </Chip>
@@ -286,6 +369,7 @@ export default function ShopScreen() {
                   textStyle={{
                     color: petType === type ? colors.white : colors.blacktext,
                   }}
+                  selectedColor={colors.white}
                 >
                   {type}
                 </Chip>
@@ -293,12 +377,14 @@ export default function ShopScreen() {
             </View>
 
             <View style={styles.sliderContainer}>
-              <Text style={styles.filterLabel}>Max Price: ₹{priceRange}</Text>
+              <Text style={styles.filterLabel}>
+                Max Price: {priceRange === 5000 ? "No limit" : `₹${priceRange}`}
+              </Text>
               <Slider
                 style={{ width: "100%", height: 40 }}
-                minimumValue={5}
-                maximumValue={100}
-                step={5}
+                minimumValue={500}
+                maximumValue={5000}
+                step={500}
                 value={priceRange}
                 onValueChange={setPriceRange}
                 minimumTrackTintColor={colors.accent}
@@ -308,35 +394,77 @@ export default function ShopScreen() {
           </View>
         )}
 
-        <Text style={styles.header}>Search Results</Text>
+        <Text style={styles.header}>Listed Products</Text>
 
-        {filteredProducts.length > 0 ? (
+        {sortedAndFilteredProducts.length > 0 ? (
           <FlatList
             contentContainerStyle={{ paddingBottom: 180 }}
-            data={filteredProducts}
+            data={sortedAndFilteredProducts}
             keyExtractor={(item) => item.id}
             numColumns={2}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.productCard}
-                onPress={() => {
-                  router.push({ pathname: `/tabs/shop/${item.id}` });
-                }}
-              >
-                <Image
-                  source={{
-                    uri: item.image || "https://via.placeholder.com/150",
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            renderItem={({ item }) => {
+              let distance;
+              if (userLocation && item.location) {
+                distance = calculateDistance(
+                  userLocation.latitude,
+                  userLocation.longitude,
+                  item.location.latitude,
+                  item.location.longitude
+                );
+              }
+
+              return (
+                <Pressable
+                  style={styles.productCard}
+                  onPress={() => {
+                    router.push({
+                      pathname: `/tabs/shop/${item.id}`,
+                      params: { productId: item.id },
+                    });
                   }}
-                  style={styles.productImage}
-                />
-                <View style={styles.productInfo}>
-                  <Text style={styles.productName}>{item.name}</Text>
-                  <Text style={styles.productPrice}>
-                    ₹{item.price.toFixed(2)}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
+                >
+                  <Image
+                    source={{
+                      uri: item.images
+                        ? item.images[0]
+                        : item.image || "https://via.placeholder.com/150",
+                    }}
+                    style={styles.productImage}
+                  />
+                  {item.status === "sold" && (
+                    <View style={styles.soldBadge}>
+                      <Text style={styles.soldText}>SOLD</Text>
+                    </View>
+                  )}
+                  {item.status === "reserved" && (
+                    <View style={styles.reservedBadge}>
+                      <Text style={styles.reservedText}>RESERVED</Text>
+                    </View>
+                  )}
+                  <View style={styles.productInfo}>
+                    <Text style={styles.productName}>{item.name}</Text>
+                    <Text style={styles.productPrice}>
+                      ₹{item.price.toFixed(2)}
+                    </Text>
+                    <View style={styles.locationContainer}>
+                      <Ionicons
+                        name="location-outline"
+                        size={14}
+                        color={colors.darkgray}
+                      />
+                      <Text style={styles.locationText}>
+                        {item.address?.city || "Location not specified"}
+                        {distance !== undefined &&
+                          ` • ${formatDistance(distance)}`}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            }}
           />
         ) : (
           <Text style={styles.noResults}>
@@ -410,7 +538,7 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 20,
-    marginBottom: 15,
+    marginBottom: 5,
     color: colors.black,
     fontFamily: "AptosSemiBold",
   },
@@ -422,11 +550,40 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.offwhite,
+    position: "relative",
   },
   productImage: {
     width: "100%",
     height: 150,
     resizeMode: "cover",
+  },
+  soldBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(255, 0, 0, 0.8)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  soldText: {
+    color: "white",
+    fontFamily: "UbuntuBold",
+    fontSize: 10,
+  },
+  reservedBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(255, 165, 0, 0.8)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  reservedText: {
+    color: "white",
+    fontFamily: "UbuntuBold",
+    fontSize: 10,
   },
   productInfo: {
     padding: 10,
@@ -442,12 +599,90 @@ const styles = StyleSheet.create({
     color: colors.accent,
     marginTop: 5,
   },
-
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  locationText: {
+    marginLeft: 4,
+    fontSize: 12,
+    color: colors.darkgray,
+    fontFamily: "Aptos",
+  },
   noResults: {
     fontSize: 16,
     fontStyle: "italic",
     color: "#888",
     textAlign: "center",
     marginTop: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: colors.darkgray,
+    fontFamily: "Aptos",
+  },
+  sortContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  sortLabel: {
+    fontSize: 14,
+    color: colors.black,
+    fontFamily: "AptosSemiBold",
+    marginRight: 10,
+  },
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.offwhite,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  sortButtonText: {
+    fontSize: 14,
+    color: colors.black,
+    fontFamily: "AptosSemiBold",
+    marginRight: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sortModalContent: {
+    width: "80%",
+    backgroundColor: colors.white,
+    borderRadius: 10,
+    padding: 0,
+    overflow: "hidden",
+  },
+  sortOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.offwhite,
+  },
+  selectedSort: {
+    backgroundColor: colors.lightAccent,
+  },
+  disabledSort: {
+    opacity: 0.7,
+  },
+  sortOptionText: {
+    fontSize: 16,
+    color: colors.blacktext,
+    fontFamily: "Aptos",
   },
 });
