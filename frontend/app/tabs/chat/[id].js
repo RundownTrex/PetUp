@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, Text, StyleSheet, Image, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Pressable,
+} from "react-native";
+
 import {
   GiftedChat,
   Bubble,
@@ -18,10 +25,11 @@ import colors from "../../../utils/colors";
 
 const ChatScreen = () => {
   const router = useRouter();
-  const { ownerId } = useLocalSearchParams();
+  const { ownerId, initialMessage } = useLocalSearchParams();
   const [ownerData, setOwnerData] = useState({});
   const [messages, setMessages] = useState([]);
   const { setIsBottomSheetOpen } = useBottomSheet();
+  const [inputText, setInputText] = useState(initialMessage || "");
 
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -270,7 +278,12 @@ const ChatScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <Pressable
+          onPress={() => {
+            router.back();
+          }}
+          style={styles.backButton}
+        >
           <Ionicons
             name="chevron-back-outline"
             size={24}
@@ -283,6 +296,36 @@ const ChatScreen = () => {
         </Text>
         <View style={styles.rightPlaceholder} />
       </View>
+
+      {initialMessage && (
+        <View style={styles.quickMessageContainer}>
+          <Text style={styles.quickMessageTitle}>Quick Message:</Text>
+          <Text style={styles.quickMessageText}>{initialMessage}</Text>
+          <Pressable
+            style={styles.sendQuickMessageButton}
+            onPress={() => {
+              if (user && chatId) {
+                const msg = {
+                  _id: Math.random().toString(36).substring(7),
+                  text: initialMessage,
+                  createdAt: new Date(),
+                  user: {
+                    _id: user.uid,
+                    name: userData?.firstname || "You",
+                  },
+                };
+                onSend([msg]);
+                router.setParams({ initialMessage: "" });
+              }
+            }}
+          >
+            <Text style={styles.sendQuickMessageButtonText}>
+              Send This Message
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
       <GiftedChat
         messages={messages}
         onSend={onSend}
@@ -296,6 +339,8 @@ const ChatScreen = () => {
         renderComposer={renderComposer}
         renderSend={renderSend}
         keyboardShouldPersistTaps="handled"
+        text={inputText}
+        onInputTextChanged={(inputText) => setInputText(inputText)}
       />
     </View>
   );
@@ -360,5 +405,37 @@ const styles = StyleSheet.create({
     height: 42,
     justifyContent: "center",
     alignItems: "center",
+  },
+  quickMessageContainer: {
+    backgroundColor: colors.lightwhite,
+    padding: 16,
+    margin: 10,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.accent,
+  },
+  quickMessageTitle: {
+    fontFamily: "UbuntuMedium",
+    fontSize: 15,
+    marginBottom: 6,
+    color: colors.black,
+  },
+  quickMessageText: {
+    fontFamily: "Aptos",
+    fontSize: 14,
+    color: colors.dark,
+    marginBottom: 10,
+  },
+  sendQuickMessageButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+  },
+  sendQuickMessageButtonText: {
+    color: colors.white,
+    fontFamily: "UbuntuMedium",
+    fontSize: 14,
   },
 });

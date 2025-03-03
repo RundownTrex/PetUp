@@ -291,7 +291,7 @@ export default function HomePage() {
             <View>
               <Pressable
                 style={styles.quickActionButton}
-                onPress={() => router.push("/pets/newpets/")}
+                onPress={() => router.push("/tabs/home/pets/newpets")}
               >
                 <Image
                   source={require("../../../assets/Rehome.png")}
@@ -321,7 +321,7 @@ export default function HomePage() {
                     style={styles.listingItem}
                     onPress={() =>
                       router.push({
-                        pathname: `/pets/${listing.id}`,
+                        pathname: `/tabs/home/pets/${listing.id}`,
                         params: { pet: JSON.stringify(listing) },
                       })
                     }

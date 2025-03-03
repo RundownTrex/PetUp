@@ -67,7 +67,6 @@ export default function EditProduct() {
     return product ? JSON.parse(product) : {};
   }, [product]);
 
-  // Form state
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [petType, setPetType] = useState("");
@@ -349,23 +348,33 @@ export default function EditProduct() {
           onChange={(item) => setCondition(item.value)}
         />
 
-<Dropdown
-  style={styles.input}
-  data={statusOptions}
-  labelField="label"
-  valueField="value"
-  placeholder="Product Status"
-  placeholderStyle={{ color: colors.black, fontFamily: "Aptos" }}
-  value={status}
-  onChange={(item) => setStatus(item.value)}
-  renderLeftIcon={() => (
-    <View style={{ marginRight: 5 }}>
-      {status === 'available' && <Ionicons name="checkmark-circle" size={20} color={colors.green} />}
-      {status === 'sold' && <Ionicons name="close-circle" size={20} color={colors.red} />}
-      {status === 'reserved' && <Ionicons name="time" size={20} color={colors.orange} />}
-    </View>
-  )}
-/>
+        <Dropdown
+          style={styles.input}
+          data={statusOptions}
+          labelField="label"
+          valueField="value"
+          placeholder="Product Status"
+          placeholderStyle={{ color: colors.black, fontFamily: "Aptos" }}
+          value={status}
+          onChange={(item) => setStatus(item.value)}
+          renderLeftIcon={() => (
+            <View style={{ marginRight: 5 }}>
+              {status === "available" && (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color={colors.green}
+                />
+              )}
+              {status === "sold" && (
+                <Ionicons name="close-circle" size={20} color={colors.red} />
+              )}
+              {status === "reserved" && (
+                <Ionicons name="time" size={20} color={colors.orange} />
+              )}
+            </View>
+          )}
+        />
 
         <CustomInput
           label="Price (₹)"

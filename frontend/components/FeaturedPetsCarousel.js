@@ -121,7 +121,7 @@ const FeaturedPetsCarousel = () => {
       style={styles.card}
       onPress={() =>
         router.push({
-          pathname: `/pets/${item.id}`,
+          pathname: `/tabs/home/pets/${item.id}`,
           params: { pet: JSON.stringify(item) },
         })
       }

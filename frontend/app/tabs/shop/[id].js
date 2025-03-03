@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import * as Location from "expo-location";
 import { getDistance } from "geolib";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import colors from "../../../utils/colors";
 import MainButton from "../../../components/MainButton";
@@ -48,11 +49,16 @@ const ProductDetailsScreen = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [distance, setDistance] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
   const scale = useSharedValue(1);
   const animatedFavoriteStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  const bottomSheetRef = useRef(null);
+  const snapPoints = useMemo(() => ["50%"], []);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -65,6 +71,9 @@ const ProductDetailsScreen = () => {
         if (productDoc.exists) {
           const productData = { id: productDoc.id, ...productDoc.data() };
           setProduct(productData);
+
+          const currentUserId = auth().currentUser?.uid;
+          setIsOwner(currentUserId === productData.sellerId);
 
           if (productData.sellerId) {
             const sellerDoc = await firestore()
@@ -215,27 +224,44 @@ const ProductDetailsScreen = () => {
     }
   };
 
+  const openContactOptions = () => {
+    setIsBottomSheetVisible(true);
+    bottomSheetRef.current?.expand();
+  };
+
+  const closeContactOptions = () => {
+    bottomSheetRef.current?.close();
+    setTimeout(() => setIsBottomSheetVisible(false), 200);
+  };
+
+  const emailSeller = () => {
+    if (seller?.email) {
+      const subject = encodeURIComponent(`Inquiry about ${product.name}`);
+      const body = encodeURIComponent(
+        `Hello,\n\nI'm interested in your listing "${product.name}" priced at ₹${product.price}. Please let me know if it's still available.\n\nThank you.`
+      );
+      const url = `mailto:${seller.email}?subject=${subject}&body=${body}`;
+      Linking.openURL(url).catch(() => {
+        Alert.alert("Error", "Could not open email application");
+      });
+    } else {
+      Alert.alert("Error", "Seller's email is not available");
+    }
+  };
+
+  const callSeller = () => {
+    if (seller?.phoneNumber) {
+      const url = `tel:${seller.phoneNumber}`;
+      Linking.openURL(url).catch(() => {
+        Alert.alert("Error", "Could not open phone application");
+      });
+    } else {
+      Alert.alert("Error", "Seller's phone number is not available");
+    }
+  };
+
   const contactSeller = () => {
-    Alert.alert(
-      "Contact Seller",
-      `Would you like to message ${seller.firstname} ${seller.lastname}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Message",
-          onPress: () => {
-            console.log("Seller ID: ", product.sellerId);
-            router.push({
-              pathname: `/tabs/chat/${product.sellerId}`,
-              params: { ownerId: product.sellerId },
-            });
-          },
-        },
-      ]
-    );
+    openContactOptions();
   };
 
   const reportListing = () => {
@@ -301,6 +327,13 @@ const ProductDetailsScreen = () => {
     Linking.openURL(url).catch((error) => {
       console.error("Error opening maps:", error);
       Alert.alert("Error", "Could not open the map application.");
+    });
+  };
+
+  const editProductInfo = () => {
+    router.push({
+      pathname: `/tabs/shop/editproduct/`,
+      params: { product: JSON.stringify(product) },
     });
   };
 
@@ -471,13 +504,6 @@ const ProductDetailsScreen = () => {
                   <Text style={styles.sellerName}>
                     {seller.firstname} {seller.lastname}
                   </Text>
-
-                  <View style={styles.salesRow}>
-                    <Text style={styles.salesText}>
-                      {seller.totalSales || 0}{" "}
-                      {seller.totalSales === 1 ? "sale" : "sales"}
-                    </Text>
-                  </View>
                 </View>
                 <View style={styles.directionsContainer}>
                   <Ionicons name="navigate" size={24} color={colors.black} />
@@ -540,12 +566,21 @@ const ProductDetailsScreen = () => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <MainButton
-            title="Contact Seller"
-            icon={<Ionicons name="chatbubble" size={18} color="white" />}
-            onPress={contactSeller}
-            style={{ backgroundColor: colors.accent }}
-          />
+          {isOwner ? (
+            <MainButton
+              title="Edit Listing"
+              icon={<Ionicons name="create" size={18} color="white" />}
+              onPress={editProductInfo}
+              style={{ backgroundColor: colors.accent }}
+            />
+          ) : (
+            <MainButton
+              title="Contact Seller"
+              icon={<Ionicons name="chatbubble" size={18} color="white" />}
+              onPress={contactSeller}
+              style={{ backgroundColor: colors.accent }}
+            />
+          )}
         </View>
       </ScrollView>
       <Modal
@@ -596,6 +631,109 @@ const ProductDetailsScreen = () => {
           </View>
         </Pressable>
       </Modal>
+      {isBottomSheetVisible && (
+        <Pressable
+          style={styles.bottomSheetBackdrop}
+          onPress={() => {
+            bottomSheetRef.current?.close();
+            setTimeout(() => setIsBottomSheetVisible(false), 200);
+          }}
+        />
+      )}
+
+      {isBottomSheetVisible && (
+        <BottomSheet
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          enablePanDownToClose={true}
+          onClose={() => setIsBottomSheetVisible(false)}
+          backgroundStyle={styles.bottomSheetBackground}
+          handleIndicatorStyle={styles.bottomSheetIndicator}
+        >
+          <BottomSheetView style={styles.bottomSheetContent}>
+            <Text style={styles.bottomSheetTitle}>
+              Contact {seller?.firstname || "Seller"}
+            </Text>
+
+            <Pressable
+              style={styles.contactOption}
+              onPress={() => {
+                closeContactOptions();
+                const prePopulatedMessage = `Hi, I'm interested in your listing "${product.name}" priced at ₹${product.price}. Is it still available?`;
+
+                router.push({
+                  pathname: `/tabs/chat/${product.sellerId}`,
+                  params: {
+                    ownerId: product.sellerId,
+                    initialMessage: prePopulatedMessage,
+                  },
+                });
+              }}
+            >
+              <View
+                style={[
+                  styles.contactIconCircle,
+                  { backgroundColor: "#e9fdf0" },
+                ]}
+              >
+                <Ionicons name="chatbubble" size={24} color={colors.accent} />
+              </View>
+              <View style={styles.contactOptionTextContainer}>
+                <Text style={styles.contactOptionTitle}>Message</Text>
+                <Text style={styles.contactOptionSubtitle}>
+                  Chat with the seller
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={styles.contactOption}
+              onPress={() => {
+                emailSeller();
+                closeContactOptions();
+              }}
+            >
+              <View
+                style={[
+                  styles.contactIconCircle,
+                  { backgroundColor: "#e9f0fd" },
+                ]}
+              >
+                <FontAwesome name="envelope" size={24} color="#4a80f5" />
+              </View>
+              <View style={styles.contactOptionTextContainer}>
+                <Text style={styles.contactOptionTitle}>Email</Text>
+                <Text style={styles.contactOptionSubtitle}>
+                  Send an email to the seller
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={styles.contactOption}
+              onPress={() => {
+                callSeller();
+                closeContactOptions();
+              }}
+            >
+              <View
+                style={[
+                  styles.contactIconCircle,
+                  { backgroundColor: "#fde9e9" },
+                ]}
+              >
+                <FontAwesome name="phone" size={24} color="#f54a4a" />
+              </View>
+              <View style={styles.contactOptionTextContainer}>
+                <Text style={styles.contactOptionTitle}>Call</Text>
+                <Text style={styles.contactOptionSubtitle}>
+                  Call the seller directly
+                </Text>
+              </View>
+            </Pressable>
+          </BottomSheetView>
+        </BottomSheet>
+      )}
     </>
   );
 };
@@ -709,15 +847,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "AptosSemiBold",
     marginBottom: 2,
-  },
-  salesRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  salesText: {
-    fontSize: 14,
-    color: colors.darkgray,
-    fontFamily: "Aptos",
   },
   detailRow: {
     flexDirection: "row",
@@ -883,6 +1012,60 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 24,
     fontFamily: "AptosBold",
+  },
+  bottomSheetBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  bottomSheetBackground: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  bottomSheetIndicator: {
+    backgroundColor: colors.black,
+    width: 60,
+  },
+  bottomSheetContent: {
+    flex: 1,
+    padding: 20,
+  },
+  bottomSheetTitle: {
+    fontSize: 20,
+    fontFamily: "AptosBold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  contactOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightgray,
+  },
+  contactIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 15,
+  },
+  contactOptionTextContainer: {
+    flex: 1,
+  },
+  contactOptionTitle: {
+    fontFamily: "AptosBold",
+    fontSize: 16,
+  },
+  contactOptionSubtitle: {
+    fontFamily: "Aptos",
+    fontSize: 14,
+    color: colors.darkgray,
   },
 });
 

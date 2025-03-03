@@ -18,11 +18,11 @@ import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
 import { router } from "expo-router";
 
-import CustomHeader from "../../../components/CustomHeader";
-import MainButton from "../../../components/MainButton";
-import CustomInput from "../../../components/CustomInput";
-import colors from "../../../utils/colors";
-import { petTypes, breedOptions } from "../../../utils/petType";
+import CustomHeader from "../../../../../components/CustomHeader";
+import MainButton from "../../../../../components/MainButton";
+import CustomInput from "../../../../../components/CustomInput";
+import colors from "../../../../../utils/colors";
+import { petTypes, breedOptions } from "../../../../../utils/petType";
 
 const genderOptions = [
   { label: "Male", value: "Male" },

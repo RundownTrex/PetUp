@@ -15,10 +15,10 @@ import Toast from "react-native-toast-message";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 
-import CustomHeader from "../../../components/CustomHeader";
-import MainButton from "../../../components/MainButton";
-import CustomInput from "../../../components/CustomInput";
-import colors from "../../../utils/colors";
+import CustomHeader from "../../../../../components/CustomHeader";
+import MainButton from "../../../../../components/MainButton";
+import CustomInput from "../../../../../components/CustomInput";
+import colors from "../../../../../utils/colors";
 import { router } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -23,10 +23,11 @@ import Animated, {
 } from "react-native-reanimated";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
-import colors from "../../utils/colors";
-import MainButton from "../../components/MainButton";
-import CustomHeader from "../../components/CustomHeader";
+import colors from "../../../../utils/colors";
+import MainButton from "../../../../components/MainButton";
+import CustomHeader from "../../../../components/CustomHeader";
 import { router } from "expo-router";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -42,6 +43,9 @@ const PetDetailsScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const bottomSheetRef = useRef(null);
+  const snapPoints = useMemo(() => ["50%"], []);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -152,7 +156,7 @@ const PetDetailsScreen = () => {
     }
   };
 
-  const emailAdopter = () => {
+  const emailOwner = () => {
     const email = ownerData ? ownerData.email : null;
     console.log("Pressed");
     if (email) {
@@ -167,7 +171,7 @@ const PetDetailsScreen = () => {
     }
   };
 
-  const callAdopter = () => {
+  const callOwner = () => {
     const phone = ownerData ? ownerData.phoneNumber : null;
     if (phone) {
       const url = `tel:${phone}`;
@@ -210,6 +214,28 @@ const PetDetailsScreen = () => {
         },
       ]
     );
+  };
+
+  const openContactOptions = () => {
+    setIsBottomSheetVisible(true);
+    bottomSheetRef.current?.expand();
+  };
+
+  const closeContactOptions = () => {
+    bottomSheetRef.current?.close();
+    setTimeout(() => setIsBottomSheetVisible(false), 200);
+  };
+
+  const handleMessagePress = () => {
+    closeContactOptions();
+    const prePopulatedMessage = `Hi, I'm interested in your pet "${petData.petName}" (${petData.petSpecies} - ${petData.breed}). Is it still available for adoption?`;
+    router.replace({
+      pathname: `/tabs/chat/${petData.ownerId}`,
+      params: {
+        ownerId: petData.ownerId,
+        initialMessage: prePopulatedMessage,
+      },
+    });
   };
 
   return (
@@ -361,24 +387,6 @@ const PetDetailsScreen = () => {
               <Ionicons name="navigate" size={24} color="black" />
             </View>
           </Pressable>
-          {!isOwner && (
-            <View style={styles.contactContainer}>
-              <View style={styles.buttonWrapper}>
-                <MainButton
-                  title="Email Adopter"
-                  icon={<FontAwesome name="envelope" size={16} color="white" />}
-                  onPress={() => emailAdopter()}
-                />
-              </View>
-              <View style={styles.buttonWrapper}>
-                <MainButton
-                  title="Call Adopter"
-                  icon={<FontAwesome name="phone" size={16} color="white" />}
-                  onPress={() => callAdopter()}
-                />
-              </View>
-            </View>
-          )}
           <View style={styles.descriptionContainer}>
             <Text style={styles.sectionTitle}>About {petData.petName}</Text>
             <Text style={styles.descriptionText}>{petData.about}</Text>
@@ -422,22 +430,103 @@ const PetDetailsScreen = () => {
               />
             </>
           ) : (
-            <MainButton
-              title="Contact Owner"
-              onPress={() => {
-                router.back();
-                router.push({
-                  pathname: `/tabs/chat/${petData.ownerId}`,
-                  params: {
-                    owner: JSON.stringify(ownerData),
-                    ownerId: petData.ownerId,
-                  },
-                });
-              }}
-            />
+            <MainButton title="Contact Owner" onPress={openContactOptions} />
           )}
         </View>
       </ScrollView>
+
+      {isBottomSheetVisible && (
+        <Pressable
+          style={styles.bottomSheetBackdrop}
+          onPress={() => {
+            bottomSheetRef.current?.close();
+            setTimeout(() => setIsBottomSheetVisible(false), 200);
+          }}
+        />
+      )}
+
+      {isBottomSheetVisible && (
+        <BottomSheet
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          enablePanDownToClose={true}
+          onClose={() => setIsBottomSheetVisible(false)}
+          backgroundStyle={styles.bottomSheetBackground}
+          handleIndicatorStyle={styles.bottomSheetIndicator}
+        >
+          <BottomSheetView style={styles.bottomSheetContent}>
+            <Text style={styles.bottomSheetTitle}>
+              Contact {ownerData?.firstname || "Owner"}
+            </Text>
+
+            <Pressable
+              style={styles.contactOption}
+              onPress={handleMessagePress}
+            >
+              <View
+                style={[
+                  styles.contactIconCircle,
+                  { backgroundColor: "#e9fdf0" },
+                ]}
+              >
+                <Ionicons name="chatbubble" size={24} color={colors.accent} />
+              </View>
+              <View style={styles.contactOptionTextContainer}>
+                <Text style={styles.contactOptionTitle}>Message</Text>
+                <Text style={styles.contactOptionSubtitle}>
+                  Chat with the owner
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={styles.contactOption}
+              onPress={() => {
+                emailOwner();
+                closeContactOptions();
+              }}
+            >
+              <View
+                style={[
+                  styles.contactIconCircle,
+                  { backgroundColor: "#e9f0fd" },
+                ]}
+              >
+                <FontAwesome name="envelope" size={24} color="#4a80f5" />
+              </View>
+              <View style={styles.contactOptionTextContainer}>
+                <Text style={styles.contactOptionTitle}>Email</Text>
+                <Text style={styles.contactOptionSubtitle}>
+                  Send an email to the owner
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={styles.contactOption}
+              onPress={() => {
+                callOwner();
+                closeContactOptions();
+              }}
+            >
+              <View
+                style={[
+                  styles.contactIconCircle,
+                  { backgroundColor: "#fde9e9" },
+                ]}
+              >
+                <FontAwesome name="phone" size={24} color="#f54a4a" />
+              </View>
+              <View style={styles.contactOptionTextContainer}>
+                <Text style={styles.contactOptionTitle}>Call</Text>
+                <Text style={styles.contactOptionSubtitle}>
+                  Call the owner directly
+                </Text>
+              </View>
+            </Pressable>
+          </BottomSheetView>
+        </BottomSheet>
+      )}
     </>
   );
 };
@@ -543,15 +632,6 @@ const styles = StyleSheet.create({
   navigateIconContainer: {
     alignItems: "flex-end",
   },
-  contactContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 15,
-    gap: 20,
-  },
-  buttonWrapper: {
-    flex: 1,
-  },
   buttonContainer: {
     padding: 20,
   },
@@ -614,6 +694,60 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 24,
     fontFamily: "UbuntuBold",
+  },
+  bottomSheetBackground: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  bottomSheetIndicator: {
+    backgroundColor: colors.black,
+    width: 60,
+  },
+  bottomSheetContent: {
+    flex: 1,
+    padding: 20,
+  },
+  bottomSheetTitle: {
+    fontSize: 20,
+    fontFamily: "AptosBold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  contactOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightgray,
+  },
+  contactIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 15,
+  },
+  contactOptionTextContainer: {
+    flex: 1,
+  },
+  contactOptionTitle: {
+    fontFamily: "AptosBold",
+    fontSize: 16,
+  },
+  contactOptionSubtitle: {
+    fontFamily: "Aptos",
+    fontSize: 14,
+    color: colors.darkgray,
+  },
+  bottomSheetBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
 });
 

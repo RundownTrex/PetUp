@@ -339,7 +339,7 @@ export default function SearchPage() {
               onPress={() => {
                 console.log(item);
                 router.push({
-                  pathname: `/pets/${item.id}`,
+                  pathname: `/tabs/home/pets/${item.id}`,
                   params: { pet: JSON.stringify(item), isOwner: false },
                 });
               }}

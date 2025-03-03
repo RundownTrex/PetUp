@@ -49,10 +49,10 @@ const MyPetsScreen = () => {
 
   const renderPetItem = ({ item }) => (
     <Pressable
-      style={styles.petItem}
+      style={styles.petCard}
       onPress={() =>
         router.push({
-          pathname: `/pets/${item.id}`,
+          pathname: `/tabs/home/pets/${item.id}`,
           params: { pet: JSON.stringify(item), isOwner: true },
         })
       }
@@ -61,7 +61,59 @@ const MyPetsScreen = () => {
         source={{ uri: item.petImages ? item.petImages[0] : item.image }}
         style={styles.petImage}
       />
-      <Text style={styles.petName}>{item.petName}</Text>
+      <View style={styles.petInfo}>
+        <View style={styles.nameAndStatus}>
+          <Text style={styles.petName}>{item.petName}</Text>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: item.adopted
+                  ? colors.lightgray
+                  : colors.lightgreen,
+              },
+            ]}
+          >
+            <Text style={styles.statusText}>
+              {item.adopted ? "Adopted" : "Available"}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.petDetails}>
+          <Text style={styles.detailLabel}>Species: </Text>
+          {item.petSpecies}
+          {item.gender && (
+            <Text>
+              {" "}
+              • <Text style={styles.detailLabel}>Gender: </Text>
+              {item.gender}
+            </Text>
+          )}
+        </Text>
+
+        <Text style={styles.petDetails}>
+          <Text style={styles.detailLabel}>Breed: </Text>
+          {item.breed || "Not specified"}
+        </Text>
+
+        <Text style={styles.petDetails}>
+          <Text style={styles.detailLabel}>Age: </Text>
+          {item.ageValue
+            ? `${item.ageValue} ${item.ageUnit || "years"}`
+            : "Not specified"}
+        </Text>
+
+
+
+
+        {item.createdAt && (
+          <Text style={styles.dateAdded}>
+            Added {new Date(item.createdAt.toDate()).toLocaleDateString()}
+          </Text>
+        )}
+      </View>
+
     </Pressable>
   );
 
@@ -84,7 +136,7 @@ const MyPetsScreen = () => {
         )}
         <MainButton
           title="Add New Pet"
-          onPress={() => router.push("/pets/newpets/")}
+          onPress={() => router.push("/tabs/home/pets/newpets/")}
         />
       </View>
     </>
@@ -100,7 +152,7 @@ const styles = StyleSheet.create({
   petsList: {
     paddingBottom: 20,
   },
-  petItem: {
+  petCard: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
@@ -113,10 +165,47 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginRight: 10,
   },
+  petInfo: {
+    flex: 1,
+  },
+  nameAndStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   petName: {
     fontSize: 16,
     color: colors.black,
     fontFamily: "UbuntuMedium",
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    color: colors.white,
+    fontFamily: "UbuntuMedium",
+  },
+  petDetails: {
+    fontSize: 14,
+    color: colors.black,
+    fontFamily: "UbuntuRegular",
+  },
+  detailLabel: {
+    fontFamily: "UbuntuMedium",
+  },
+  dateAdded: {
+    fontSize: 12,
+    color: colors.darkgray,
+    fontFamily: "UbuntuRegular",
+    marginTop: 4,
+  },
+  adoptedText: {
+    fontSize: 24,
+    color: colors.white,
+    fontFamily: "UbuntuBold",
   },
   emptyText: {
     textAlign: "center",
