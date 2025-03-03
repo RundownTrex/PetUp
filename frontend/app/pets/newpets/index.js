@@ -16,34 +16,13 @@ import Toast from "react-native-toast-message";
 import * as Location from "expo-location";
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
+import { router } from "expo-router";
 
 import CustomHeader from "../../../components/CustomHeader";
 import MainButton from "../../../components/MainButton";
 import CustomInput from "../../../components/CustomInput";
 import colors from "../../../utils/colors";
-import { router } from "expo-router";
-
-const petTypes = [
-  "Dog",
-  "Cat",
-  "Rabbit",
-  "Bird",
-  "Reptile",
-  "Fish",
-  "Primate",
-  "Other",
-];
-
-const breedOptions = {
-  Dog: ["Labrador", "Poodle", "Bulldog", "Beagle"],
-  Cat: ["Persian", "Siamese", "Maine Coon"],
-  Rabbit: ["Dutch", "Lionhead"],
-  Bird: ["Parakeet", "Canary"],
-  Reptile: ["Iguana", "Gecko"],
-  Fish: ["Goldfish", "Betta"],
-  Primate: ["Capuchin", "Marmoset"],
-  Other: ["Mixed"],
-};
+import { petTypes, breedOptions } from "../../../utils/petType";
 
 const genderOptions = [
   { label: "Male", value: "Male" },
@@ -69,7 +48,6 @@ export default function NewPet() {
   const [breed, setBreed] = useState("");
   const [gender, setGender] = useState("");
   const [size, setSize] = useState("");
-  const [age, setAge] = useState("");
   const [about, setAbout] = useState("");
   const [personality, setPersonality] = useState("");
   const [vaccinations, setVaccinations] = useState("");
@@ -82,8 +60,18 @@ export default function NewPet() {
   const [address, setAddress] = useState(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [locationFetchTimedOut, setLocationFetchTimedOut] = useState(false);
 
   const handleSave = async () => {
+    if (!location) {
+      Toast.show({
+        type: "error",
+        text1: "Location Required",
+        text2: "Please enable location services to continue.",
+      });
+      return;
+    }
+
     if (
       !petName ||
       !petSpecies ||
@@ -103,6 +91,7 @@ export default function NewPet() {
       });
       return;
     }
+
     setLoading(true);
 
     const uploadedImages = [];
@@ -189,19 +178,36 @@ export default function NewPet() {
   ];
 
   const fetchLocation = async () => {
+    setLocationFetchTimedOut(false);
     setIsFetchingLocation(true);
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Please allow location access to include your pet's location."
-      );
+
+    const timeoutId = setTimeout(() => {
+      setLocationFetchTimedOut(true);
+    }, 10000);
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission required",
+          "Please allow location access to include your pet's location."
+        );
+        setIsFetchingLocation(false);
+        clearTimeout(timeoutId);
+        return;
+      }
+
+      const currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation.coords);
+      clearTimeout(timeoutId); // Clear timeout as we got the location
+    } catch (error) {
+      console.error("Error fetching location:", error);
+      // Don't set isFetchingLocation to false here
+      // We'll let the timeout handle showing retry options
+    } finally {
+      clearTimeout(timeoutId); // In case we exit the try/catch before timeout cleared
       setIsFetchingLocation(false);
-      return;
     }
-    const currentLocation = await Location.getCurrentPositionAsync({});
-    setLocation(currentLocation.coords);
-    setIsFetchingLocation(false);
   };
 
   const fetchAddress = async (coords) => {
@@ -296,7 +302,14 @@ export default function NewPet() {
               </Text>
             </>
           ) : (
-            <Text style={styles.locationText}>Location unavailable</Text>
+            <View style={styles.locationError}>
+              <Text style={styles.locationErrorText}>
+                Location is required to list your pet.
+              </Text>
+              <Pressable style={styles.retryButton} onPress={fetchLocation}>
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </Pressable>
+            </View>
           )}
         </View>
         <View style={styles.imageContainer}>
@@ -522,5 +535,22 @@ const styles = StyleSheet.create({
     marginTop: 5,
     color: colors.darkgray,
     fontFamily: "Aptos",
+  },
+  locationError: {
+    alignItems: "center",
+  },
+  locationErrorText: {
+    color: colors.red,
+    fontFamily: "Aptos",
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: colors.accent,
+    padding: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontFamily: "AptosBold",
   },
 });

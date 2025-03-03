@@ -48,6 +48,8 @@
     "react-native-toast-message": "^2.2.1",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
+    "react-native-webview": "^13.13.2",
+    "react-native-youtube-iframe": "^2.3.0",
     "styled-components": "^6.1.15"
   },
   "devDependencies": {

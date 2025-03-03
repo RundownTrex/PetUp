@@ -69,6 +69,7 @@ export default function NewAccessory() {
   const [address, setAddress] = useState(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [locationFetchTimedOut, setLocationFetchTimedOut] = useState(false);
 
   const resetForm = () => {
     setName("");
@@ -86,11 +87,20 @@ export default function NewAccessory() {
   useFocusEffect(
     React.useCallback(() => {
       resetForm();
-      return () => {}; 
+      return () => {};
     }, [])
   );
 
   const handleSave = async () => {
+    if (!location) {
+      Toast.show({
+        type: "error",
+        text1: "Location Required",
+        text2: "Please enable location services to continue.",
+      });
+      return;
+    }
+
     if (
       !name.trim() ||
       !category ||
@@ -157,7 +167,7 @@ export default function NewAccessory() {
         "Listing Created",
         "Your product has been listed successfully!"
       );
-      resetForm(); 
+      resetForm();
       router.back();
     } catch (error) {
       console.error("Error saving product info:", error);
@@ -196,19 +206,33 @@ export default function NewAccessory() {
   };
 
   const fetchLocation = async () => {
+    setLocationFetchTimedOut(false);
     setIsFetchingLocation(true);
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Please allow location access to include your location."
-      );
+
+    const timeoutId = setTimeout(() => {
+      setLocationFetchTimedOut(true);
+    }, 10000);
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission required",
+          "Please allow location access to include your location."
+        );
+        setIsFetchingLocation(false);
+        clearTimeout(timeoutId);
+        return;
+      }
+      const currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation.coords);
+      clearTimeout(timeoutId); 
+    } catch (error) {
+      console.error("Error fetching location:", error);
+    } finally {
+      clearTimeout(timeoutId); 
       setIsFetchingLocation(false);
-      return;
     }
-    const currentLocation = await Location.getCurrentPositionAsync({});
-    setLocation(currentLocation.coords);
-    setIsFetchingLocation(false);
   };
 
   const fetchAddress = async (coords) => {
@@ -285,6 +309,14 @@ export default function NewAccessory() {
                 Fetching address...
               </Text>
               <ActivityIndicator size="small" color={colors.accent} />
+              {locationFetchTimedOut && (
+                <Pressable
+                  style={styles.inlineRetryButton}
+                  onPress={fetchLocation}
+                >
+                  <Text style={styles.inlineRetryText}>Retry</Text>
+                </Pressable>
+              )}
             </View>
           ) : location ? (
             <>
@@ -306,7 +338,14 @@ export default function NewAccessory() {
               </Text>
             </>
           ) : (
-            <Text style={styles.locationText}>Location unavailable</Text>
+            <View style={styles.locationError}>
+              <Text style={styles.locationErrorText}>
+                Location is required to list your product.
+              </Text>
+              <Pressable style={styles.retryButton} onPress={fetchLocation}>
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </Pressable>
+            </View>
           )}
         </View>
 
@@ -519,5 +558,29 @@ const styles = StyleSheet.create({
     fontFamily: "Aptos",
     textAlign: "center",
     fontSize: 12,
+  },
+  inlineRetryButton: {
+    marginLeft: 10,
+  },
+  inlineRetryText: {
+    color: colors.accent,
+    fontFamily: "AptosBold",
+  },
+  locationError: {
+    alignItems: "center",
+  },
+  locationErrorText: {
+    fontFamily: "Aptos",
+    color: colors.red,
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: colors.accent,
+    padding: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontFamily: "AptosBold",
   },
 });

@@ -59,6 +59,7 @@ export default function HomePage() {
   const snapPoints = useMemo(() => ["95%"], []);
 
   const [notifications, setNotifications] = useState([]);
+  const [userProducts, setUserProducts] = useState([]);
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
@@ -133,6 +134,27 @@ export default function HomePage() {
     return () => unsubscribeNotifications();
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      const unsubscribeProducts = firestore()
+        .collection("petProducts")
+        .where("sellerId", "==", user.uid)
+        .onSnapshot(
+          (snapshot) => {
+            const products = [];
+            snapshot.forEach((doc) =>
+              products.push({ id: doc.id, ...doc.data() })
+            );
+            setUserProducts(products);
+          },
+          (error) => {
+            console.error("Error fetching product listings:", error);
+          }
+        );
+      return () => unsubscribeProducts();
+    }
+  }, [user]);
+
   const showNotifications = useCallback(() => {
     setIsBottomSheetOpen(true);
     bottomSheetRef.current?.snapToIndex(1);
@@ -203,12 +225,22 @@ export default function HomePage() {
                   {`${getGreeting()} ${firstName ? firstName : ""}`}
                 </Text>
               </View>
-              <Pressable onPress={showNotifications}>
+              <Pressable
+                onPress={showNotifications}
+                style={styles.notificationIconContainer}
+              >
                 <Ionicons
                   name="notifications-outline"
                   size={28}
                   color="black"
                 />
+                {notifications.length > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationCount}>
+                      {notifications.length > 9 ? "9+" : notifications.length}
+                    </Text>
+                  </View>
+                )}
               </Pressable>
             </View>
           </View>
@@ -353,6 +385,86 @@ export default function HomePage() {
                   onPress={() => router.push("pets/newpets")}
                 >
                   <Text style={styles.addListingsButtonText}>Add Listing</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+
+          <Divider style={{ marginVertical: 5 }} />
+
+          <View style={styles.myListingsContainer}>
+            <Text style={styles.myListingsTitle}>My Products</Text>
+            {userProducts.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.myListingsScrollView}
+              >
+                {userProducts.slice(0, 3).map((product) => (
+                  <Pressable
+                    key={product.id}
+                    style={styles.listingItem}
+                    onPress={() => router.push(`/tabs/shop/${product.id}`)}
+                  >
+                    <Image
+                      source={{ uri: product.images?.[0] || product.image }}
+                      style={styles.listingImage}
+                    />
+                    <Text
+                      style={styles.listingName}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {product.name}
+                    </Text>
+                    <Text
+                      style={[styles.listingDetails, styles.productPrice]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      ₹{product.price?.toFixed(2)}
+                    </Text>
+                    <Text
+                      style={styles.listingDetails}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {product.category}
+                    </Text>
+                    <Text
+                      style={styles.listingDate}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      Posted:{" "}
+                      {product.listedDate
+                        ? new Date(product.listedDate).toDateString()
+                        : "Recently"}
+                    </Text>
+                  </Pressable>
+                ))}
+                <Pressable
+                  style={styles.viewAllCard}
+                  onPress={() => router.replace("/tabs/profile/4_myproducts")}
+                >
+                  <Ionicons
+                    name="chevron-forward"
+                    size={24}
+                    color={colors.black}
+                  />
+                  <Text style={styles.viewAllText}>View All</Text>
+                </Pressable>
+              </ScrollView>
+            ) : (
+              <View style={styles.noListingsContainer}>
+                <Text style={styles.noListingsText}>
+                  You have no product listings yet
+                </Text>
+                <Pressable
+                  style={styles.addListingsButton}
+                  onPress={() => router.push("/tabs/shop/newproduct")}
+                >
+                  <Text style={styles.addListingsButtonText}>Add Product</Text>
                 </Pressable>
               </View>
             )}
@@ -635,7 +747,6 @@ const styles = StyleSheet.create({
     fontFamily: "AptosBold",
     fontSize: 20,
     marginBottom: 10,
-    paddingHorizontal: 16,
   },
   myListingsScrollView: {
     paddingLeft: 16,
@@ -670,11 +781,8 @@ const styles = StyleSheet.create({
     padding: 10,
     marginRight: 16,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: colors.offwhite,
   },
   listingName: {
     fontFamily: "UbuntuBold",
@@ -736,5 +844,22 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     height: 50,
+  },
+  notificationIconContainer: {
+    position: "relative",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "red",
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  notificationCount: {
+    color: "white",
+    fontSize: 10,
+    fontFamily: "AptosBold",
   },
 });

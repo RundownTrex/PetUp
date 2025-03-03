@@ -27,6 +27,11 @@ const slides = [
     image: require("../../assets/dog-house.png"),
   },
   {
+    title: "Everything Your Pet Needs",
+    description: "From toys to beds, collars to treats - all in one place.",
+    image: require("../../assets/accessories.png"),
+  },
+  {
     title: "Get Started Today",
     description: "Sign up now and make a difference in a pet's life!",
     image: require("../../assets/pet.png"),
@@ -52,7 +57,7 @@ export default function LandingPage() {
         <Carousel
           ref={carouselRef}
           width={width}
-          height={height * 0.6} // 60% of the screen height
+          height={height * 0.6}
           data={slides}
           renderItem={({ item }) => (
             <View style={styles.slide}>

@@ -119,6 +119,16 @@ export default function SignUpPage() {
       return;
     }
 
+    if (!profileImage) {
+      Toast.show({
+        type: "info",
+        text1: "Profile photo required",
+        text2: "Please select a profile photo",
+      });
+      setLoading(false);
+      return;
+    }
+
     if (password !== cpassword) {
       Toast.show({
         type: "error",

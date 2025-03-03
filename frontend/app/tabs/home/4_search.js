@@ -22,6 +22,7 @@ import firestore from "@react-native-firebase/firestore";
 
 import colors from "../../../utils/colors";
 import CustomHeader from "../../../components/CustomHeader";
+import { petTypes, breedOptions } from "../../../utils/petType";
 
 const customSearchTheme = {
   ...DefaultTheme,
@@ -64,27 +65,6 @@ export default function SearchPage() {
   const [range, setRange] = useState(10);
   const searchbarRef = useRef(null);
 
-  const breedOptions = {
-    Dog: ["Labrador", "Poodle", "Bulldog", "Beagle"],
-    Cat: ["Persian", "Siamese", "Maine Coon"],
-    Rabbit: ["Dutch", "Lionhead"],
-    Bird: ["Parakeet", "Canary"],
-    Reptile: ["Iguana", "Gecko"],
-    Fish: ["Goldfish", "Betta"],
-    Primate: ["Capuchin", "Marmoset"],
-    Other: ["Mixed"],
-  };
-
-  const petTypes = [
-    "Dog",
-    "Cat",
-    "Rabbit",
-    "Bird",
-    "Reptile",
-    "Fish",
-    "Primate",
-    "Other",
-  ];
 
   const ageGroups = ["Baby", "Young", "Adult", "Senior"];
 
