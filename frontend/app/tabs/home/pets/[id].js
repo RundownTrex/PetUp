@@ -423,7 +423,7 @@ const PetDetailsScreen = () => {
                 title="Edit"
                 onPress={() => {
                   router.push({
-                    pathname: `/pets/editpets/`,
+                    pathname: `/tabs/home/pets/editpets/`,
                     params: { pet: JSON.stringify(petData) },
                   });
                 }}

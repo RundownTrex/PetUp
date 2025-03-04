@@ -392,15 +392,18 @@ const ProductDetailsScreen = () => {
               </Pressable>
             )}
           />
-          <Pressable style={styles.favoriteIcon} onPress={toggleFavorite}>
-            <Animated.View style={animatedFavoriteStyle}>
-              <Ionicons
-                name={isFavorite ? "heart" : "heart-outline"}
-                size={28}
-                color="red"
-              />
-            </Animated.View>
-          </Pressable>
+
+          {!isOwner && (
+            <Pressable style={styles.favoriteIcon} onPress={toggleFavorite}>
+              <Animated.View style={animatedFavoriteStyle}>
+                <Ionicons
+                  name={isFavorite ? "heart" : "heart-outline"}
+                  size={28}
+                  color="red"
+                />
+              </Animated.View>
+            </Pressable>
+          )}
         </View>
 
         <Modal
@@ -447,14 +450,16 @@ const ProductDetailsScreen = () => {
             <Text style={styles.listedDate}>
               Listed {formatDate(product.listedDate)}
             </Text>
-            <Pressable style={styles.reportButton} onPress={reportListing}>
-              <MaterialCommunityIcons
-                name="flag-outline"
-                size={18}
-                color={colors.darkgray}
-              />
-              <Text style={styles.reportText}>Report</Text>
-            </Pressable>
+            {!isOwner && (
+              <Pressable style={styles.reportButton} onPress={reportListing}>
+                <MaterialCommunityIcons
+                  name="flag-outline"
+                  size={18}
+                  color={colors.darkgray}
+                />
+                <Text style={styles.reportText}>Report</Text>
+              </Pressable>
+            )}
           </View>
 
           <Text style={styles.productName}>{product.name}</Text>
