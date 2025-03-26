@@ -40,14 +40,14 @@ PetUp is a comprehensive mobile application designed to connect pet owners who n
 
 <table>
   <tr>
-    <td><img src="path/to/screenshot1.png" width="200" alt="Home Screen"/></td>
-    <td><img src="path/to/screenshot2.png" width="200" alt="Pet Listing"/></td>
-    <td><img src="path/to/screenshot3.png" width="200" alt="Chat Interface"/></td>
+    <td><img src="/frontend/screenshots/HomeScreen.png" width="200" alt="Home Screen"/></td>
+    <td><img src="/frontend/screenshots/PetSearch.png" width="200" alt="Pet Search"/></td>
+    <td><img src="/frontend/screenshots/Chat.png" width="200" alt="Chat"/></td>
   </tr>
   <tr>
-    <td><img src="path/to/screenshot4.png" width="200" alt="Search Screen"/></td>
-    <td><img src="path/to/screenshot5.png" width="200" alt="Profile Page"/></td>
-    <td><img src="path/to/screenshot6.png" width="200" alt="Pet Details"/></td>
+    <td><img src="/frontend/screenshots/PetDetails.png" width="200" alt="Pet Details"/></td>
+    <td><img src="/frontend/screenshots/Favourites.png" width="200" alt="Favourites"/></td>
+    <td><img src="/frontend/screenshots/ProductSearch.png" width="200" alt="Product Search"/></td>
   </tr>
 </table>
 
